@@ -12,7 +12,6 @@ VOLUME_OFFSET = 0
 PITCH_OFFSET = 0
 FILE = None
 PLAYER = None
-INIT = False
 
 # Non-blocking midi player.
 def midistart(filename):
@@ -37,12 +36,10 @@ def change_instrument(instrument, track):
 
 # Should not be called directly
 def mplay():
-	global PLAYER, INIT
+	global PLAYER
 	# Prevent initialization from happening twice
-	if not init:
-	  pygame.midi.init()
-	  PLAYER = pygame.midi.Output(0)
-	  INIT = True
+	pygame.midi.init()
+	PLAYER = pygame.midi.Output(0)
 	
 	# Store notes currently being played, so we know what they were when we turn them off
 	notes_in_progress = {}  
@@ -56,6 +53,8 @@ def mplay():
 		elif message.type == "note_off":
 			key = (message.note, message.channel)
 			PLAYER.note_off(notes_in_progress[key][0], notes_in_progress[key][1], message.channel)
-		else:
-		  PLAYER.write(message)
+		elif message.type == "program_change":
+			PLAYER.set_instrument(message.program, message.channel) 
 #			del notes_in_progress[key]
+
+	PLAYER.close()
