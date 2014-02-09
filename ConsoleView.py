@@ -19,19 +19,20 @@ class ConsoleView(AbstractView):
         model.register_instrument_listener(self.update_instrument)
 
     def update_volume(self, volume_level):
-        print('Volume updated to: {0}'.format(volume_level))
+        sys.stdout.write('Volume updated to: {0}          \r'.format(volume_level))
 
     def update_pitch(self, pitch_level):
-        print('Pitch updated to: {0}'.format(pitch_level))
+        sys.stdout.write('Pitch updated to: {0}          \r'.format(pitch_level))
 
     def update_speed(self, speed_level):
-        print('Speed updated to: {0}'.format(speed_level))
+        sys.stdout.write('Speed updated to: {0}          \r'.format(speed_level))
 
     def update_instrument(self, instrument_number):
-        print('Instrument updated to: {0}'.format(instrument_number))
+        sys.stdout.write('Instrument updated to: {0}          \r'.format(instrument_number))
 
     def update_note(self, note_number):
-        print('Note updated to: {0}'.format(note_number))
+        sys.stdout.write('Note updated to: {0}          \r'.format(note_number))
 
     def update_track(self, track_name):
-        print('Track updated to: {0}'.format(track_name))
+        sys.stdout.write('Track updated to: {0}          \r'.format(track_name))
+
