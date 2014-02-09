@@ -12,8 +12,9 @@ VOLUME_OFFSET = 0
 PITCH_OFFSET = 0
 FILE = None
 PLAYER = None
+INIT = False
 
-# Non-blocking midi player. Only works correctly if MIDI file has only one track.
+# Non-blocking midi player.
 def midistart(filename):
 	global FILE
 	FILE = filename
@@ -21,38 +22,40 @@ def midistart(filename):
 	playback_thread.daemon = True
 	playback_thread.start()
 
-# Changes pitch offset - 0 is default, negative is quieter, positive is louder
 def pitch_offset(pitch):
 	global PITCH_OFFSET
 	PITCH_OFFSET = pitch
 
-# Changes volume offset - 0 is default, negative is quieter, positive is louder
 def volume_offset(volume):
 	global VOLUME_OFFSET
 	VOLUME_OFFSET = volume
 
-# Changes instrument of currently playing file
+# Changes instrument of currently playing file on the specified track
 def change_instrument(instrument, track):
 	global PLAYER
 	PLAYER.set_instrument(instrument, track);
 
 # Should not be called directly
 def mplay():
-	global PLAYER
-	pygame.midi.init()
-	PLAYER = pygame.midi.Output(0)
+	global PLAYER, INIT
+	# Prevent initialization from happening twice
+	if not init:
+	  pygame.midi.init()
+	  PLAYER = pygame.midi.Output(0)
+	  INIT = True
 	
 	# Store notes currently being played, so we know what they were when we turn them off
 	notes_in_progress = {}  
 	mid = MidiFile(FILE)
 	for message in mid.play():
 		if message.type == "note_on":
-#			key = (message.note, message.channel)
-#			notes_in_progress[key] = (message.note+PITCH_OFFSET, message.velocity+VOLUME_OFFSET) 
-#			PLAYER.note_on(notes_in_progress[key][0], notes_in_progress[key][1], message.channel)
+			key = (message.note, message.channel)
+			notes_in_progress[key] = (message.note+PITCH_OFFSET, message.velocity+VOLUME_OFFSET) 
+			PLAYER.note_on(notes_in_progress[key][0], notes_in_progress[key][1], message.channel)
 			PLAYER.note_on(message.note, message.velocity, message.channel)
 		elif message.type == "note_off":
-#			key = (message.note, message.channel)
-#			PLAYER.note_off(notes_in_progress[key][0], notes_in_progress[key][1], message.channel)
-			PLAYER.note_off(message.note, message.velocity, message.channel)
+			key = (message.note, message.channel)
+			PLAYER.note_off(notes_in_progress[key][0], notes_in_progress[key][1], message.channel)
+		else:
+		  PLAYER.write(message)
 #			del notes_in_progress[key]
