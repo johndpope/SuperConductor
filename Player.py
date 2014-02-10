@@ -8,7 +8,7 @@ import pygame.midi
 import threading
 
 # Global Variables
-VOLUME_OFFSET = 0
+VELOCITY_OFFSET = 0
 PITCH_OFFSET = 0
 FILE = None
 PLAYER = None
@@ -22,22 +22,32 @@ def midistart(filename):
 	playback_thread.start()
 
 def pitch_offset(pitch):
+	## TODO: Restrict to octaves? (multiples of 12)
+	# Specify a track. (change PITCH_OFFSET to an array of pitch offsets for each track)
+	# Validate input is within acceptable range
+	# Offsetting by other values can make it sound bad, but might be more interesting
 	global PITCH_OFFSET
 	PITCH_OFFSET = pitch
 
-def volume_offset(volume):
-	global VOLUME_OFFSET
-	VOLUME_OFFSET = volume
+def velocity_offset(volume):
+	## TODO: Validate input is within acceptable range
+	# Specify a track. (change VELOCITY_OFFSET to an array of pitch offsets for each track)
+	global VELOCITY_OFFSET
+	VELOCITY_OFFSET = volume
 
 # Changes instrument of currently playing file on the specified track
 def change_instrument(instrument, track):
 	global PLAYER
 	PLAYER.set_instrument(instrument, track);
+	
+def change_tempo(tempo):
+	## TODO: Implement
+	#  mid.ticks_per_beat = int(mid.ticks_per_beat * tempo)
+	pass
 
 # Should not be called directly
 def mplay():
 	global PLAYER
-	# Prevent initialization from happening twice
 	pygame.midi.init()
 	PLAYER = pygame.midi.Output(0)
 	
@@ -45,16 +55,14 @@ def mplay():
 	notes_in_progress = {}  
 	mid = MidiFile(FILE)
 	for message in mid.play():
-		if message.type == "note_on":
+		if message.type == "note_off" or (hasattr(message, 'velocity') and message.velocity == 0):
 			key = (message.note, message.channel)
-			notes_in_progress[key] = (message.note+PITCH_OFFSET, message.velocity+VOLUME_OFFSET) 
-			PLAYER.note_on(notes_in_progress[key][0], notes_in_progress[key][1], message.channel)
-			PLAYER.note_on(message.note, message.velocity, message.channel)
-		elif message.type == "note_off":
+			PLAYER.note_off(notes_in_progress[key], message.velocity, message.channel)
+		elif message.type == "note_on":
 			key = (message.note, message.channel)
-			PLAYER.note_off(notes_in_progress[key][0], notes_in_progress[key][1], message.channel)
+			notes_in_progress[key] = message.note+PITCH_OFFSET 
+			PLAYER.note_on(notes_in_progress[key], message.velocity+VELOCITY_OFFSET, message.channel)
 		elif message.type == "program_change":
 			PLAYER.set_instrument(message.program, message.channel) 
-#			del notes_in_progress[key]
 
 	PLAYER.close()
