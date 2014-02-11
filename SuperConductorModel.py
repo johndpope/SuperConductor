@@ -15,6 +15,7 @@ class SuperConductorModel:
         self.pitch = Variable()
         self.speed = Variable()
         self.instrument = Variable()
+        self.control = Variable()
 
     def register_track_listener(self, listen):
         self.track.changed.connect(listen)
@@ -33,3 +34,6 @@ class SuperConductorModel:
 
     def register_instrument_listener(self, listen):
         self.instrument.changed.connect(listen)
+        
+    def register_control_listener(self, listen):
+        self.control.changed.connect(listen)
