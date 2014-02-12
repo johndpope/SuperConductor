@@ -52,10 +52,12 @@ def mplay():
                         notes_in_progress[message.note] = (message.note+PITCH_OFFSET, message.velocity+VOLUME_OFFSET) 
                         PLAYER.note_on(notes_in_progress[message.note][0], notes_in_progress[message.note][1], 1)
                         '''
-                        PLAYER.note_on(message.note+PITCH_OFFSET, message.velocity+VOLUME_OFFSET, 1)
+                        if message.channel == 0:
+                                PLAYER.note_on(message.note, message.velocity, 1)
                 elif message.type == "note_off":
                         '''
                         PLAYER.note_off(notes_in_progress[message.note][0], notes_in_progress[message.note][1], 1)
                         del notes_in_progress[message.note]
                         '''
-                        PLAYER.note_off(message.note+PITCH_OFFSET, channel=1)
+                        if message.channel == 0:
+                                PLAYER.note_off(message.note, channel=1)

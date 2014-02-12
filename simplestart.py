@@ -3,7 +3,9 @@
 from SimpleController import SimpleController
 from ConsoleView import ConsoleView
 from SuperConductorModel import SuperConductorModel
+from PlayerView import PlayerView
 
 m = SuperConductorModel()
-v = ConsoleView(m)
-c = SimpleController(m)
+p = PlayerView(m)
+#v = ConsoleView(m)
+#c = SimpleController(m)

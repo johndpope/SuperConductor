@@ -8,6 +8,7 @@ from SuperConductorModel import SuperConductorModel
 from AbstractView import AbstractView
 
 from mido.midifiles import MidiFile
+import mido
 import pygame.midi
 import threading
 import sys
@@ -34,6 +35,18 @@ class PlayerView(AbstractView):
     def load_file(self, filename):
         global PARSER
         PARSER = MidiFile(filename)
+
+        with open(filename, 'rb') as f:
+            # read in the binary file as a byte array
+            ba = bytearray(f.read())
+
+            # feed that into mido's parser
+            p = mido.Parser()
+            p.feed(ba)
+            self.messages = []
+            while p.pending():
+                self.messages.append(p.get_message())
+
     
     # Stars playing back the file in a new thread
     # (A file must be loaded first)
