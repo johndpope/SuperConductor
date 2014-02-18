@@ -1,0 +1,4 @@
+- file selection
+- advanced controls
+- UI integration
+- UI changes

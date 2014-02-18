@@ -6,4 +6,4 @@ def enum(*sequential, **named):
 Controls = enum("VOLUME", "PITCH", "TEMPO", "INSTRUMENT", "TRACK", "PLAY")
 NUM_CONTROLS = 6
 GLOBAL = 0
-NUM_TRACKS = 16
+NUM_TRACKS = 17

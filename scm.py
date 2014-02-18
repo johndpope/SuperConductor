@@ -17,6 +17,7 @@ class Model:
 
         # current control
         self.current_control = Controls.VOLUME
+        self.current_track = GLOBAL
 
         self.controls = {   Controls.VOLUME: {},
                             Controls.PITCH: {},
@@ -28,7 +29,7 @@ class Model:
 
 
         # initialize controls
-        for control in range(len(self.controls)):
+        for control in self.controls.keys():
             for track in range(NUM_TRACKS + 1):
                 self.controls[control][track] = 0
 
@@ -45,8 +46,8 @@ class Model:
         self.value_change.connect(listen)
 
     def set_value(self, value):
-        self.controls[self.current_control][self.controls[Controls.TRACK][GLOBAL]] = value
-        self.value_change(self.current_control, self.controls[Controls.TRACK][GLOBAL], value)
+        self.controls[self.current_control][self.current_track] = value
+        self.value_change(self.current_control, self.current_track, value)
 
     def set_global_value(self, value):
         self.controls[self.current_control][GLOBAL] = value
@@ -55,6 +56,10 @@ class Model:
     def set_control(self, value):
         self.current_control = value
         self.control_change(value)
+
+    def set_track(self, value):
+        self.current_track = value % NUM_TRACKS
+        self.value_change(Controls.TRACK, value, value)
 
     # Loads a midi file
     def load_file(self, filename):

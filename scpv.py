@@ -42,7 +42,8 @@ class PPPlayerView(AbstractView):
 
     def update_value(self, control, track, value):
         if(control == Controls.INSTRUMENT):
-            self.player.set_instrument(value, track);
+            self.player.set_instrument(value, track-1);
+            print("Instrument {0} on track {1}".format(value, track-1))
         elif (control == Controls.TEMPO):
             self.secPerTick = self.tempo_to_spt(value)
 

@@ -48,13 +48,11 @@ class Controller(Leap.Listener):
                         model.set_control((model.current_control - 1) % NUM_CONTROLS)
                         print("Control changed to {0}".format(model.current_control))
                     elif event.key == pygame.K_a:
-                        if model.current_control == Controls.TRACK:
-                            model.set_global_value((model.controls[Controls.TRACK][GLOBAL] - 1) % NUM_TRACKS)
-                            print("Track changed to {0}".format(model.controls[Controls.TRACK][GLOBAL]))
+                        model.set_track((model.current_track - 1) % NUM_TRACKS)
+                        print("Track changed to {0}".format(model.current_track))
                     elif event.key == pygame.K_d:
-                        if model.current_control == Controls.TRACK:
-                            model.set_global_value((model.controls[Controls.TRACK][GLOBAL] + 1) % NUM_TRACKS)
-                            print("Track changed to {0}".format(model.controls[Controls.TRACK][GLOBAL]))
+                        model.set_track((model.current_track + 1) % NUM_TRACKS)
+                        print("Track changed to {0}".format(model.current_track))
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_e:
                         self.stop_listen = True
@@ -82,7 +80,7 @@ class Controller(Leap.Listener):
 
             if self.start_listen:
                 self.value = hand.palm_position.y
-                self.initial_value = model.controls[model.current_control][model.controls[Controls.TRACK][GLOBAL]]
+                self.initial_value = model.controls[model.current_control][model.current_track]
                 print("Initial {0}".format(self.value))
                 self.start_listen = False
                 self.listening = True
@@ -101,7 +99,7 @@ class Controller(Leap.Listener):
                     model.set_global_value(self.initial_value + offset)
                     print("Tempo {0}".format(model.controls[Controls.TEMPO][GLOBAL]))
                 elif model.current_control == Controls.INSTRUMENT:
-                    model.set_global_value(min(max(self.initial_value + offset, 0), 127))
+                    model.set_value(min(max(self.initial_value + offset, 0), 127))
                 else:
                     model.set_value(offset)
 
