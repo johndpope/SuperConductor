@@ -7,7 +7,7 @@ from SuperConductorModel import SuperConductorModel
 from AbstractView import AbstractView
 import pygame, sys, Leap, Player
 
-class SimpleUI(AbstractView):
+class SimpleUI():
     def __init__(self, model):
         model.register_track_listener(self.update_track)
         model.register_current_note_listener(self.update_note)

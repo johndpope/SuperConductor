@@ -10,26 +10,10 @@ class AbstractView(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def update_volume(self, volume_level):
+    def update_control(self, value):
         pass
 
     @abstractmethod
-    def update_pitch(self, pitch_level):
-        pass
-
-    @abstractmethod
-    def update_speed(self, speed_level):
-        pass
-
-    @abstractmethod
-    def update_instrument(self, instrument_number):
-        pass
-
-    @abstractmethod
-    def update_note(self, note_number):
-        pass
-
-    @abstractmethod
-    def update_track(self, track_name):
+    def update_value(self, control, track, value):
         pass
     
