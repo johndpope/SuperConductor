@@ -1,7 +1,7 @@
 import Leap, sys, pygame
 import threading
 import os
-from Globals import NUM_CONTROLS, Controls, GLOBAL, NUM_TRACKS
+from Globals import NUM_CONTROLS, Controls, GLOBAL, NUM_TRACKS, INSTRUMENTS
 
 class Controller(Leap.Listener):
     
@@ -42,24 +42,22 @@ class Controller(Leap.Listener):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     print "quit"
-                    sys.exit()
                     # Remove the sample listener when done
                     self.leap_controller.remove_listener(self)
-                    break
+                    sys.exit()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         print "quit"
-                        # user pressed ESC
-                        sys.exit()
                         # Remove the sample listener when done
                         self.leap_controller.remove_listener(self)
-                        break
+                        # user pressed ESC
+                        sys.exit()
                     elif event.key == pygame.K_e:
                         self.start_listen = True
                     elif event.key == pygame.K_w:
                         self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
                         model.set_control(self.controls[self.control_idx])
-                        print("Control changed to {0}".format(model.current_control))
+                        print("Control changed to {0}".format(model.current_control.name))
                     elif event.key == pygame.K_s:
                         self.control_idx = (self.control_idx + 1) % (len(self.controls) - 1)
                         model.set_control(self.controls[self.control_idx])
@@ -92,10 +90,23 @@ class Controller(Leap.Listener):
                     text = font.render("%s" % s, 1, self.defaultColor)
                               
                 self.screen.blit(text, (intX,intY))
-                if n == Controls.TRACK:
-                    text = font.render("    {0}          ".format(model.current_track), 1, self.defaultColor)
+                if model.current_track == GLOBAL:
+                    if n == Controls.TRACK:
+                        text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
+                    elif n == Controls.INSTRUMENT:
+                        text = font.render("    {0}          ".format("n/a"), 1, self.defaultColor)
+                    else:
+                        text = font.render("    {0}          ".format(model.globals[n]), 1, self.defaultColor)
+                        
                 else:
-                    text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
+                    if n == Controls.TRACK:
+                        text = font.render("    {0}          ".format(model.current_track), 1, self.defaultColor)
+                    elif n == Controls.INSTRUMENT:
+                        text = font.render("    {0}          ".format(INSTRUMENTS[model.controls[n][model.current_track]]), 1, self.defaultColor)
+                    elif n == Controls.TEMPO:
+                        text = font.render("    {0}          ".format("n/a"), 1, self.defaultColor)
+                    else:
+                        text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
                 self.screen.blit(text, (150,intY))
                 
                 intY += 50
@@ -127,7 +138,10 @@ class Controller(Leap.Listener):
 
             if self.start_listen:
                 self.value = hand.palm_position.y
-                self.initial_value = model.controls[model.current_control][model.current_track]
+                if model.current_track == GLOBAL:
+                    self.initial_value = model.globals[model.current_control]
+                else:
+                    self.initial_value = model.controls[model.current_control][model.current_track]
                 print("Initial {0}".format(self.value))
                 self.start_listen = False
                 self.listening = True
@@ -144,7 +158,7 @@ class Controller(Leap.Listener):
                     pass
                 elif model.current_control == Controls.TEMPO:
                     model.set_global_value(self.initial_value + offset)
-                    print("Tempo {0}".format(model.controls[Controls.TEMPO][GLOBAL]))
+                    print("Tempo {0}".format(model.globals[Controls.TEMPO]))
                 elif model.current_control == Controls.INSTRUMENT:
                     model.set_value(min(max(self.initial_value + offset, 0), 127))
                 else:

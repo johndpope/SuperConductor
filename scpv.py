@@ -42,8 +42,8 @@ class PPPlayerView(AbstractView):
 
     def update_value(self, control, track, value):
         if(control == Controls.INSTRUMENT):
-            self.player.set_instrument(value, track-1);
-            print("Instrument {0} on track {1}".format(value, track-1))
+            self.player.set_instrument(value, track);
+            print("Instrument {0} on track {1}".format(value, track))
         elif (control == Controls.TEMPO):
             self.secPerTick = self.tempo_to_spt(value)
 
@@ -68,7 +68,7 @@ class PPPlayerView(AbstractView):
         for event in model.events:
             delta = event.tick - tickTime
             tickTime = event.tick
-            while not model.controls[Controls.PLAY][GLOBAL]:
+            while not model.globals[Controls.PLAY]:
                 pass
             if self.exited:
                 self.exited = False
@@ -78,16 +78,25 @@ class PPPlayerView(AbstractView):
             if isinstance(event, midi.NoteOnEvent):
                 key = (event.pitch, event.channel)
 
+                # 'Convert' note on events with velocity 0 to note off events
+                if event.velocity == 0:
+                    self.player.note_off(notes[key], event.velocity, event.channel)
+                    continue
+                
                 # record mapping of actual note to note played
+                # Don't add a global offset to track 10, so percussion doesn't change
+                if event.channel == 9:
+                    global_pitch_offset = 0
+                else:
+                    global_pitch_offset = model.globals[Controls.PITCH]
+                
                 notes[key] = event.pitch \
-                            + model.controls[Controls.PITCH][event.channel+1] \
-                            + model.controls[Controls.PITCH][GLOBAL]
+                            + model.controls[Controls.PITCH][event.channel] \
+                            + global_pitch_offset
 
-                # Don't offset the velocity if it is 0.
                 velocity = event.velocity \
-                            + model.controls[Controls.VOLUME][event.channel + 1] \
-                            + model.controls[Controls.VOLUME][GLOBAL] \
-                            if event.velocity > 0 else 0
+                             + model.controls[Controls.VOLUME][event.channel] \
+                             + model.globals[Controls.VOLUME]
 
                 # limit pitch and velocity to their ranges
                 notes[key] = min(max(notes[key], 0), 127)
@@ -98,6 +107,8 @@ class PPPlayerView(AbstractView):
                 key = (event.pitch, event.channel)
                 self.player.note_off(notes[key], event.velocity, event.channel)
             elif isinstance(event, midi.ProgramChangeEvent):
+                # Save instrument so it is reflected in the UI
+                model.controls[Controls.INSTRUMENT][event.channel] = event.value
                 self.player.set_instrument(event.value, event.channel)
             elif isinstance(event, midi.SetTempoEvent):
                 # convert tempo to secPerTick

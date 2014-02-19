@@ -19,20 +19,23 @@ class Model:
         self.current_control = Controls.VOLUME
         self.current_track = GLOBAL
 
+        # Controls for all tracks
+        self.globals = {}
+        
+        # Individual parameters for each track
         self.controls = {   Controls.VOLUME: {},
                             Controls.PITCH: {},
                             Controls.TEMPO: {},
                             Controls.INSTRUMENT: {},
                             Controls.PLAY: {} }
 
-
-
-        # initialize controls
+        # initialize globals and controls       
         for control in self.controls.keys():
-            for track in range(NUM_TRACKS + 1):
+            self.globals[control] = 0
+            for track in range(NUM_TRACKS):
                 self.controls[control][track] = 0
 
-        self.controls[Controls.PLAY][GLOBAL] = 1
+        self.globals[Controls.PLAY] = 1
 
         # signals for notification of control change and value changes
         self.control_change = Signal()
@@ -45,11 +48,14 @@ class Model:
         self.value_change.connect(listen)
 
     def set_value(self, value):
+        if self.current_track == GLOBAL:
+            self.set_global_value(value)
+            return
         self.controls[self.current_control][self.current_track] = value
         self.value_change(self.current_control, self.current_track, value)
 
     def set_global_value(self, value):
-        self.controls[self.current_control][GLOBAL] = value
+        self.globals[self.current_control] = value
         self.value_change(self.current_control, GLOBAL, value)
 
     def set_control(self, value):
@@ -75,5 +81,6 @@ class Model:
         # find and set TEMPO
         for event in self.events:
             if isinstance(event, midi.SetTempoEvent):
-                self.controls[Controls.TEMPO][GLOBAL] = event.bpm
+                print("Found starting tempo: {0}".format(event.bpm))
+                self.globals[Controls.TEMPO] = event.bpm
                 break

@@ -2,3 +2,6 @@
 - advanced controls
 - UI integration
 - UI changes
+
+- Make program change MIDI messages be reflected in UI (instrument change)
+- BUG: some notes are being sustained ...
