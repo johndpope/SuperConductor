@@ -18,7 +18,9 @@ class Controller(Leap.Listener):
         self.stop_listen = False
         self.value = 0
         self.initial_value = 0
-        
+
+        self.controls = [Controls.VOLUME, Controls.PITCH, Controls.TEMPO, Controls.INSTRUMENT, Controls.TRACK]
+        self.control_idx = 0
 
     def keyboard_listener(self):
         pygame.init()
@@ -55,10 +57,12 @@ class Controller(Leap.Listener):
                     elif event.key == pygame.K_e:
                         self.start_listen = True
                     elif event.key == pygame.K_w:
-                        model.set_control((model.current_control + 1) % NUM_CONTROLS)
+                        self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
+                        model.set_control(self.controls[self.control_idx])
                         print("Control changed to {0}".format(model.current_control))
                     elif event.key == pygame.K_s:
-                        model.set_control((model.current_control - 1) % NUM_CONTROLS)
+                        self.control_idx = (self.control_idx + 1) % (len(self.controls) - 1)
+                        model.set_control(self.controls[self.control_idx])
                         print("Control changed to {0}".format(model.current_control))
                     elif event.key == pygame.K_a:
                         model.set_track((model.current_track - 1) % NUM_TRACKS)
@@ -78,9 +82,9 @@ class Controller(Leap.Listener):
             intX = 0
             intY = 0
             
-            for n in model.controls.keys():
-                s = self.control_string(n)
-                if n == Controls.PLAY: 
+            for n in self.controls:
+                s = n.name + ":"
+                if n == Controls.PLAY:
                     continue  
                 if n == model.current_control:
                     text = font.render("%s" % s, 1, self.highlightColor, (255, 255, 255))
@@ -89,9 +93,9 @@ class Controller(Leap.Listener):
                               
                 self.screen.blit(text, (intX,intY))
                 if n == Controls.TRACK:
-                    text = font.render("{0}          ".format(model.current_track), 1, self.defaultColor)
+                    text = font.render("    {0}          ".format(model.current_track), 1, self.defaultColor)
                 else:
-                    text = font.render("{0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
+                    text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
                 self.screen.blit(text, (150,intY))
                 
                 intY += 50
@@ -99,20 +103,6 @@ class Controller(Leap.Listener):
             pygame.display.flip()
             
         exit()
-    
-    def control_string(self, n):
-        if n == 0:
-            return "Volume:"
-        elif n == 1:
-            return "Pitch:"
-        elif n == 2:
-            return "Tempo:"
-        elif n == 3:
-            return "Instrument:"
-        elif n == 4:
-            return "Track:"
-        else:
-            return "Play:"
     
     def on_init(self, controller):
         print "Initialized"

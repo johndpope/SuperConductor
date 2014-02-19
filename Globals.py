@@ -1,9 +1,13 @@
-# enum support
-def enum(*sequential, **named):
-    enums = dict(zip(sequential, range(len(sequential))), **named)
-    return type('Enum', (), enums)
+from enum import Enum
 
-Controls = enum("VOLUME", "PITCH", "TEMPO", "INSTRUMENT", "TRACK", "PLAY")
+class Controls(Enum):
+    VOLUME = 1
+    PITCH = 2
+    TEMPO = 3
+    INSTRUMENT = 4
+    TRACK = 5
+    PLAY = 6
+
 NUM_CONTROLS = 6
 GLOBAL = 0
 NUM_TRACKS = 17

@@ -23,7 +23,6 @@ class Model:
                             Controls.PITCH: {},
                             Controls.TEMPO: {},
                             Controls.INSTRUMENT: {},
-                            Controls.TRACK: {},
                             Controls.PLAY: {} }
 
 
