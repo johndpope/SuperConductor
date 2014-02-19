@@ -6,7 +6,7 @@ from scpv import PPPlayerView
 import Leap, pygame, sys
 
 m = Model()
-m.load_file('songs\lorde-royals.mid')
+m.load_file('songs\lady_gaga-monster.mid')
 c = Controller()
 lc = Leap.Controller()
 c.setup(m, lc)

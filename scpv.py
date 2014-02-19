@@ -107,7 +107,7 @@ class PPPlayerView(AbstractView):
                 key = (event.pitch, event.channel)
                 self.player.note_off(notes[key], event.velocity, event.channel)
             elif isinstance(event, midi.ProgramChangeEvent):
-                # Save instrument so it is reflected in the UI
+                # Save instrument change so it is reflected in the UI
                 model.controls[Controls.INSTRUMENT][event.channel] = event.value
                 self.player.set_instrument(event.value, event.channel)
             elif isinstance(event, midi.SetTempoEvent):

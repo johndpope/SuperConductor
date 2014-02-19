@@ -1,7 +1,7 @@
-- file selection
-- advanced controls
-- UI integration
-- UI changes
+- File Selection in UI
+- Fix quit problem (audio continues after quit)
+- Always display global control info
+- play/pause/stop buttons in ui
+- Show song progress
 
-- Make program change MIDI messages be reflected in UI (instrument change)
-- BUG: some notes are being sustained ...
+- More controls via Leap?
