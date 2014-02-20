@@ -96,7 +96,7 @@ class Controller(Leap.Listener):
                     elif n == Controls.INSTRUMENT:
                         text = font.render("    {0}          ".format("n/a"), 1, self.defaultColor)
                     else:
-                        text = font.render("    {0}          ".format(model.globals[n]), 1, self.defaultColor)
+                        text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
                         
                 else:
                     if n == Controls.TRACK:
@@ -110,6 +110,11 @@ class Controller(Leap.Listener):
                 self.screen.blit(text, (150,intY))
                 
                 intY += 50
+                
+            text = font.render("%s" % "Progress:", 1, self.defaultColor)
+            self.screen.blit(text, (intX,intY))
+            text = font.render("    {0:.2%}          ".format(float(model.current_time) / model.final_time), 1, self.defaultColor)
+            self.screen.blit(text, (150,intY))
             
             pygame.display.flip()
             

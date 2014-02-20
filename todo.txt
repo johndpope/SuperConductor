@@ -2,6 +2,5 @@
 - Fix quit problem (audio continues after quit)
 - Always display global control info
 - play/pause/stop buttons in ui
-- Show song progress
 
 - More controls via Leap?

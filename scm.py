@@ -18,6 +18,9 @@ class Model:
         # current control
         self.current_control = Controls.VOLUME
         self.current_track = GLOBAL
+        
+        self.current_time = 0
+        self.final_time = 0
 
         # Controls for all tracks
         self.globals = {}
@@ -77,7 +80,8 @@ class Model:
                 self.events.append(event)
 
         self.events.sort()
-
+        self.final_time = self.events[-1].tick
+        
         # find and set TEMPO
         for event in self.events:
             if isinstance(event, midi.SetTempoEvent):

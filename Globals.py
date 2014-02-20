@@ -9,7 +9,7 @@ class Controls(Enum):
     PLAY = 6
 
 NUM_CONTROLS = 6
-GLOBAL = 0
+GLOBAL = 16
 NUM_TRACKS = 17
 
 INSTRUMENTS = [ "Acoustic Grand Piano",

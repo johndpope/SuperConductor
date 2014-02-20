@@ -66,6 +66,7 @@ class PPPlayerView(AbstractView):
         delta = 0
         tickTime = 0
         for event in model.events:
+            model.current_time = event.tick
             delta = event.tick - tickTime
             tickTime = event.tick
             while not model.globals[Controls.PLAY]:
@@ -105,6 +106,8 @@ class PPPlayerView(AbstractView):
                 self.player.note_on(notes[key], velocity, event.channel)
             elif isinstance(event, midi.NoteOffEvent):
                 key = (event.pitch, event.channel)
+                if key not in notes: 
+                    continue
                 self.player.note_off(notes[key], event.velocity, event.channel)
             elif isinstance(event, midi.ProgramChangeEvent):
                 # Save instrument change so it is reflected in the UI
