@@ -171,7 +171,8 @@ class Controller(Leap.Listener):
 
             if self.start_listen:
                 self.value = hand.palm_position.y
-                if model.current_track == GLOBAL:
+                if model.current_track == GLOBAL \
+                    or model.current_control == Controls.TEMPO:
                     self.initial_value = model.globals[model.current_control]
                 else:
                     self.initial_value = model.controls[model.current_control][model.current_track]
@@ -191,6 +192,8 @@ class Controller(Leap.Listener):
                     pass
                 elif model.current_control == Controls.TEMPO:
                     model.set_global_value(self.initial_value + offset)
+                    print("Value {}".format(self.value))
+                    print("Initial {}".format(self.initial_value))
                     print("Tempo {0}".format(model.globals[Controls.TEMPO]))
                 elif model.current_control == Controls.INSTRUMENT:
                     model.set_value(min(max(self.initial_value + offset, 0), 127))
