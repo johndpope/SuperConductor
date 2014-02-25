@@ -5,9 +5,10 @@ from Globals import NUM_CONTROLS, Controls, GLOBAL, NUM_TRACKS, INSTRUMENTS
 
 class Controller(Leap.Listener):
     
-    def setup(self, model, leap_controller):
+    def setup(self, model, leap_controller, fileName):
         self.model = model
         self.leap_controller = leap_controller
+        self.fileName = fileName
         
         self.thread = threading.Thread(target=self.keyboard_listener)
         self.thread.daemon = True
@@ -26,7 +27,7 @@ class Controller(Leap.Listener):
         pygame.init()
 
         self.windowWidth = 600
-        self.windowHeight = 300
+        self.windowHeight = 400
         self.defaultColor = (255, 255, 255)
         self.highlightColor = (125, 125, 125)
         self.screen = pygame.display.set_mode((self.windowWidth, self.windowHeight))
@@ -80,6 +81,14 @@ class Controller(Leap.Listener):
             intX = 0
             intY = 0
             
+            text = font.render("Now playing:  %s" % self.fileName, 1, self.defaultColor)
+            self.screen.blit(text, (intX,intY))
+            intY += 20
+            text = font.render("---------------------------------------------------------------------", 1, self.defaultColor)
+            self.screen.blit(text, (intX,intY))
+            
+            intY += 35
+                           
             for n in self.controls:
                 s = n.name + ":"
                 if n == Controls.PLAY:
@@ -115,8 +124,6 @@ class Controller(Leap.Listener):
             self.screen.blit(text, (intX,intY))
             text = font.render("    {0:.2%}          ".format(float(model.current_time) / model.final_time), 1, self.defaultColor)
             self.screen.blit(text, (150,intY))
-            
-            pygame.display.flip()
             
         exit()
     
