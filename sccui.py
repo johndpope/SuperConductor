@@ -137,8 +137,14 @@ class Controller(Leap.Listener):
             # Display current progress in the song
             text = font.render("%s" % "PROGRESS:", 1, self.defaultColor)
             self.screen.blit(text, (0,intY))
-            text = font.render("    {0:.2%}          ".format(float(model.current_time) / model.final_time), 1, self.defaultColor)
+            progress = float(model.current_time) / model.final_time
+            text = font.render("    {0:.2%}          ".format(progress), 1, self.defaultColor)
             self.screen.blit(text, (350,intY))
+            
+            intY += 25
+            pygame.draw.rect(self.screen, self.highlightColor, [180, intY, progress*350,20])
+            pygame.draw.rect(self.screen, self.defaultColor, [180+(350*progress),intY, 350-(350*progress),20])
+            
             
             pygame.display.flip()
     
