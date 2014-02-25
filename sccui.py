@@ -22,6 +22,8 @@ class Controller(Leap.Listener):
 
         self.controls = [Controls.VOLUME, Controls.PITCH, Controls.TEMPO, Controls.INSTRUMENT, Controls.TRACK]
         self.control_idx = 0
+        
+        self.exited = False
 
     def keyboard_listener(self):
         pygame.init()
@@ -44,14 +46,15 @@ class Controller(Leap.Listener):
                 if event.type == pygame.QUIT:
                     print "quit"
                     # Remove the sample listener when done
+                    self.exited = True
                     self.leap_controller.remove_listener(self)
                     sys.exit()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         print "quit"
                         # Remove the sample listener when done
-                        self.leap_controller.remove_listener(self)
-                        # user pressed ESC
+                        self.exited = True
+                        self.leap_controller.remove_listener(self) 
                         sys.exit()
                     elif event.key == pygame.K_e:
                         self.start_listen = True
@@ -78,19 +81,19 @@ class Controller(Leap.Listener):
             # Update UI
             font = pygame.font.Font(None, 36)            
   
-            intX = 0
             intY = 0
             
             text = font.render("Now playing:  %s" % self.fileName, 1, self.defaultColor)
-            self.screen.blit(text, (intX,intY))
+            self.screen.blit(text, (0,intY))
             intY += 20
             text = font.render("---------------------------------------------------------------------", 1, self.defaultColor)
-            self.screen.blit(text, (intX,intY))
+            self.screen.blit(text, (0,intY))
             
             intY += 35
                            
             for n in self.controls:
                 s = n.name + ":"
+                # Display control labels
                 if n == Controls.PLAY:
                     continue  
                 if n == model.current_control:
@@ -98,12 +101,23 @@ class Controller(Leap.Listener):
                 else:
                     text = font.render("%s" % s, 1, self.defaultColor)
                               
-                self.screen.blit(text, (intX,intY))
+                self.screen.blit(text, (0,intY))
+                
+                # Display global info on the side
+                if n == Controls.TRACK:
+                   text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
+                elif n == Controls.INSTRUMENT:
+                    text = font.render("", 1, self.defaultColor)
+                else:
+                    text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
+                self.screen.blit(text, (350,intY)) 
+                
+                # Display per track info
                 if model.current_track == GLOBAL:
                     if n == Controls.TRACK:
                         text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
                     elif n == Controls.INSTRUMENT:
-                        text = font.render("    {0}          ".format("n/a"), 1, self.defaultColor)
+                        text = font.render("", 1, self.defaultColor)
                     else:
                         text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
                         
@@ -113,19 +127,20 @@ class Controller(Leap.Listener):
                     elif n == Controls.INSTRUMENT:
                         text = font.render("    {0}          ".format(INSTRUMENTS[model.controls[n][model.current_track]]), 1, self.defaultColor)
                     elif n == Controls.TEMPO:
-                        text = font.render("    {0}          ".format("n/a"), 1, self.defaultColor)
+                        text = font.render("", 1, self.defaultColor)
                     else:
                         text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
                 self.screen.blit(text, (150,intY))
                 
                 intY += 50
-                
-            text = font.render("%s" % "Progress:", 1, self.defaultColor)
-            self.screen.blit(text, (intX,intY))
-            text = font.render("    {0:.2%}          ".format(float(model.current_time) / model.final_time), 1, self.defaultColor)
-            self.screen.blit(text, (150,intY))
             
-        exit()
+            # Display current progress in the song
+            text = font.render("%s" % "PROGRESS:", 1, self.defaultColor)
+            self.screen.blit(text, (0,intY))
+            text = font.render("    {0:.2%}          ".format(float(model.current_time) / model.final_time), 1, self.defaultColor)
+            self.screen.blit(text, (350,intY))
+            
+            pygame.display.flip()
     
     def on_init(self, controller):
         print "Initialized"

@@ -28,4 +28,9 @@ p = PPPlayerView(m)
 p.play()
 
 while True:
+    # To exit cleanly, if controller thread has ended we need to end
+    # player thread and this thread.
+    if c.exited:
+        p.exited = True
+        exit()
     pass
