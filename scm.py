@@ -21,6 +21,10 @@ class Model:
         
         self.current_time = 0
         self.final_time = 0
+        
+        # Defaults
+        self.default_tempo = 0
+        self.default_instruments = [0]*16
 
         # Controls for all tracks
         self.globals = {}
@@ -86,5 +90,6 @@ class Model:
         for event in self.events:
             if isinstance(event, midi.SetTempoEvent):
                 print("Found starting tempo: {0}".format(event.bpm))
+                self.default_tempo = event.bpm
                 self.globals[Controls.TEMPO] = event.bpm
                 break

@@ -112,9 +112,11 @@ class PPPlayerView(AbstractView):
             elif isinstance(event, midi.ProgramChangeEvent):
                 # Save instrument change so it is reflected in the UI
                 model.controls[Controls.INSTRUMENT][event.channel] = event.value
+                model.default_instruments[event.channel] = event.value
                 self.player.set_instrument(event.value, event.channel)
             elif isinstance(event, midi.SetTempoEvent):
                 # convert tempo to secPerTick
+                model.default_tempo = event.bpm
                 self.secPerTick = self.tempo_to_spt(event.bpm)
             elif not (isinstance(event, midi.MetaEvent) or isinstance(event, midi.SysexEvent)):
                 # channel = event.channel if hasattr(event, 'channel') else 0

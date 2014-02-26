@@ -72,6 +72,9 @@ class Controller(Leap.Listener):
                     elif event.key == pygame.K_d:
                         model.set_track((model.current_track + 1) % NUM_TRACKS)
                         print("Track changed to {0}".format(model.current_track))
+                    elif event.key == pygame.K_SPACE:
+                        self.restore_default()
+                        print "Restoring Default for", model.current_control.name
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_e:
                         self.stop_listen = True
@@ -161,7 +164,17 @@ class Controller(Leap.Listener):
 
     def on_exit(self, controller):
         print "Exited"
-        
+    
+    def restore_default(self):
+        model = self.model
+    
+        if model.current_control == Controls.TEMPO:
+            model.set_global_value(model.default_tempo)
+        elif model.current_control == Controls.INSTRUMENT:
+            model.set_value(model.default_instruments[model.current_track])
+        else:
+            model.set_value(0)
+    
     def on_frame(self, leapController):
         frame = leapController.frame()
         model = self.model
