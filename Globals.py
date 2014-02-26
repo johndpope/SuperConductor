@@ -154,4 +154,4 @@ INSTRUMENTS = [ "Acoustic Grand Piano",
                 "Telephone Ring",
                 "Helicopter",
                 "Applause",
-                "Applause"]
+                "Gunshot"]

@@ -116,6 +116,11 @@ class PPPlayerView(AbstractView):
             elif isinstance(event, midi.SetTempoEvent):
                 # convert tempo to secPerTick
                 self.secPerTick = self.tempo_to_spt(event.bpm)
+            elif not (isinstance(event, midi.MetaEvent) or isinstance(event, midi.SysexEvent)):
+                # channel = event.channel if hasattr(event, 'channel') else 0
+                # print("Status: {}, Channel: {}, Data 0: {}, Data 1: {}".format(
+                #         event.statusmsg, channel, event.data[0], event.data[1]))
+                self.player.write([[[event.statusmsg + event.channel, event.data[0], event.data[1]],0]])
 
         self.player.close()
         
