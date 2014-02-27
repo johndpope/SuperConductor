@@ -2,6 +2,7 @@ import Leap, sys, pygame
 import threading
 import os
 from Globals import NUM_CONTROLS, Controls, GLOBAL, NUM_TRACKS, INSTRUMENTS
+from Leap import SwipeGesture
 
 class Controller(Leap.Listener):
     
@@ -24,6 +25,8 @@ class Controller(Leap.Listener):
         self.control_idx = 0
         
         self.exited = False
+
+        self.swipeid = 0
 
     def keyboard_listener(self):
         pygame.init()
@@ -156,6 +159,7 @@ class Controller(Leap.Listener):
         #self.lastFrameID = 0
     
     def on_connect(self, controller):
+        controller.enable_gesture(Leap.Gesture.TYPE_SWIPE);
         print "Connected"
         
     def on_disconnect(self, controller):
@@ -204,13 +208,59 @@ class Controller(Leap.Listener):
                 if model.current_control == Controls.TRACK:
                     pass
                 elif model.current_control == Controls.TEMPO:
+                    offset = int(offset * .5)
                     model.set_global_value(self.initial_value + offset)
                     print("Value {}".format(self.value))
                     print("Initial {}".format(self.initial_value))
                     print("Tempo {0}".format(model.globals[Controls.TEMPO]))
                 elif model.current_control == Controls.INSTRUMENT:
+                    offset = int(offset * .25)
                     model.set_value(min(max(self.initial_value + offset, 0), 127))
+                elif model.current_control == Controls.PITCH:
+                    offset = int(offset * .1)
+                    model.set_value(self.initial_value + offset)
                 else:
                     model.set_value(self.initial_value + offset)
 
+        for gesture in frame.gestures():
+            if gesture.type == Leap.Gesture.TYPE_SWIPE and len(frame.gestures()) == 1:
+                # print(len(frame.gestures()))
+                if gesture.id == self.swipeid:
+                    continue
+                self.swipeid = gesture.id
+                swipe = SwipeGesture(gesture)
+                # horizontal or vertical
+                if abs(swipe.direction.y) > abs(swipe.direction.x):
+                    if swipe.direction.y > 0:
+                        # vertical up
+                        self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
+                        model.set_control(self.controls[self.control_idx])
+                        print("Control changed to {0}".format(model.current_control.name))
+                    else:
+                        # vertical down
+                        self.control_idx = (self.control_idx + 1) % (len(self.controls) - 1)
+                        model.set_control(self.controls[self.control_idx])
+                        print("Control changed to {0}".format(model.current_control))
+                else:
+                    # horizontal left
+                    offset = 0
+                    if swipe.direction.x > 0:
+                        offset = -1
+                    else:
+                        offset = 1
 
+                    if model.current_track == GLOBAL or model.current_control == Controls.TEMPO:
+                        self.initial_value = model.globals[model.current_control]
+                    else:
+                        self.initial_value = model.controls[model.current_control][model.current_track]
+                    if model.current_control == Controls.TRACK:
+                        pass
+                    elif model.current_control == Controls.TEMPO:
+                        model.set_global_value(self.initial_value + offset)
+                        print("Value {}".format(self.value))
+                        print("Initial {}".format(self.initial_value))
+                        print("Tempo {0}".format(model.globals[Controls.TEMPO]))
+                    elif model.current_control == Controls.INSTRUMENT:
+                        model.set_value(min(max(self.initial_value + offset, 0), 127))
+                    else:
+                        model.set_value(self.initial_value + offset)
