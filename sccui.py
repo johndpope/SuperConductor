@@ -1,7 +1,7 @@
 import Leap, sys, pygame
 import threading
 import os
-from Globals import NUM_CONTROLS, Controls, GLOBAL, NUM_TRACKS, INSTRUMENTS
+from Globals import NUM_CONTROLS, Controls, GLOBAL, NUM_TRACKS, INSTRUMENTS, PERCUSSION
 from Leap import SwipeGesture
 
 class Controller(Leap.Listener):
@@ -98,7 +98,10 @@ class Controller(Leap.Listener):
             intY += 35
                            
             for n in self.controls:
-                s = n.name + ":"
+                if n == Controls.PITCH and model.current_track == PERCUSSION:
+                    s = "TYPE:"
+                else:
+                    s = n.name + ":"
                 # Display control labels
                 if n == Controls.PLAY:
                     continue  
@@ -109,10 +112,10 @@ class Controller(Leap.Listener):
                               
                 self.screen.blit(text, (0,intY))
                 
-                # Display global info on the side
+                # Display net info on the side
                 if n == Controls.TRACK:
                    text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
-                elif n == Controls.INSTRUMENT:
+                elif n == Controls.INSTRUMENT or (n == Controls.PITCH and model.current_track == PERCUSSION):
                     text = font.render("", 1, self.defaultColor)
                 else:
                     text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
@@ -127,9 +130,19 @@ class Controller(Leap.Listener):
                     else:
                         text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
                         
+                elif model.current_track == PERCUSSION:
+                    if n == Controls.TRACK:
+                        text = font.render("    {0}          ".format("Percussion"), 1, self.defaultColor)
+                    elif n == Controls.INSTRUMENT:
+                        text = font.render("    {0}          ".format("Percussion"), 1, self.defaultColor)
+                    elif n == Controls.TEMPO:
+                        text = font.render("", 1, self.defaultColor)
+                    else:
+                        text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
+                        
                 else:
                     if n == Controls.TRACK:
-                        text = font.render("    {0}          ".format(model.current_track), 1, self.defaultColor)
+                        text = font.render("    {0}          ".format(model.current_track + 1), 1, self.defaultColor)
                     elif n == Controls.INSTRUMENT:
                         text = font.render("    {0}          ".format(INSTRUMENTS[model.controls[n][model.current_track]]), 1, self.defaultColor)
                     elif n == Controls.TEMPO:
@@ -218,11 +231,14 @@ class Controller(Leap.Listener):
                     model.set_value(min(max(self.initial_value + offset, 0), 127))
                 elif model.current_control == Controls.PITCH:
                     offset = int(offset * .1)
-                    model.set_value(self.initial_value + offset)
+                    model.set_value(min(max(self.initial_value + offset, -127), 127))
                 else:
-                    model.set_value(self.initial_value + offset)
+                    model.set_value(min(max(self.initial_value + offset, -127), 127))
 
         for gesture in frame.gestures():
+            # Don't handle gestures if we are listening
+            if self.listening:
+                break
             if gesture.type == Leap.Gesture.TYPE_SWIPE and len(frame.gestures()) == 1:
                 # print(len(frame.gestures()))
                 if gesture.id == self.swipeid:
@@ -263,4 +279,4 @@ class Controller(Leap.Listener):
                     elif model.current_control == Controls.INSTRUMENT:
                         model.set_value(min(max(self.initial_value + offset, 0), 127))
                     else:
-                        model.set_value(self.initial_value + offset)
+                        model.set_value(min(max(self.initial_value + offset, -127), 127))
