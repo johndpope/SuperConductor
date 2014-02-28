@@ -3,6 +3,7 @@ import threading
 import os
 from Globals import NUM_CONTROLS, Controls, GLOBAL, NUM_TRACKS, INSTRUMENTS
 from Leap import SwipeGesture
+import time
 
 class Controller(Leap.Listener):
     
@@ -27,6 +28,7 @@ class Controller(Leap.Listener):
         self.exited = False
 
         self.swipeid = 0
+        self.tap_list = []
 
     def keyboard_listener(self):
         pygame.init()
@@ -160,6 +162,7 @@ class Controller(Leap.Listener):
     
     def on_connect(self, controller):
         controller.enable_gesture(Leap.Gesture.TYPE_SWIPE);
+        controller.enable_gesture(Leap.Gesture.TYPE_KEY_TAP);
         print "Connected"
         
     def on_disconnect(self, controller):
@@ -196,10 +199,12 @@ class Controller(Leap.Listener):
                 print("Initial {0}".format(self.value))
                 self.start_listen = False
                 self.listening = True
+                print("start listening")
 
             if self.stop_listen:
                 self.listening = False
                 self.stop_listen = False
+                print("stop listening")
             
             if self.listening:
                 offset = int(hand.palm_position.y - self.value)
@@ -208,11 +213,12 @@ class Controller(Leap.Listener):
                 if model.current_control == Controls.TRACK:
                     pass
                 elif model.current_control == Controls.TEMPO:
-                    offset = int(offset * .5)
-                    model.set_global_value(self.initial_value + offset)
-                    print("Value {}".format(self.value))
-                    print("Initial {}".format(self.initial_value))
-                    print("Tempo {0}".format(model.globals[Controls.TEMPO]))
+                    pass
+                    # offset = int(offset * .5)
+                    # model.set_global_value(self.initial_value + offset)
+                    # print("Value {}".format(self.value))
+                    # print("Initial {}".format(self.initial_value))
+                    # print("Tempo {0}".format(model.globals[Controls.TEMPO]))
                 elif model.current_control == Controls.INSTRUMENT:
                     offset = int(offset * .25)
                     model.set_value(min(max(self.initial_value + offset, 0), 127))
@@ -223,7 +229,9 @@ class Controller(Leap.Listener):
                     model.set_value(self.initial_value + offset)
 
         for gesture in frame.gestures():
-            if gesture.type == Leap.Gesture.TYPE_SWIPE and len(frame.gestures()) == 1:
+            if gesture.type == Leap.Gesture.TYPE_SWIPE \
+                    and len(frame.gestures()) == 1 \
+                    and not self.listening:
                 # print(len(frame.gestures()))
                 if gesture.id == self.swipeid:
                     continue
@@ -264,3 +272,32 @@ class Controller(Leap.Listener):
                         model.set_value(min(max(self.initial_value + offset, 0), 127))
                     else:
                         model.set_value(self.initial_value + offset)
+            if gesture.type == Leap.Gesture.TYPE_KEY_TAP \
+                        and self.listening:
+                
+                t = time.time()
+                if len(self.tap_list) < 10:
+                    if len(self.tap_list) > 0:
+                        dif = t - self.tap_list[-1]
+                        if dif < .1:
+                            continue
+                    self.tap_list.append(time.time())
+                    print("TAP")
+                else:
+                    dif = t - self.tap_list[-1]
+                    if dif < .1:
+                        continue
+                    self.tap_list.pop(0)
+                    self.tap_list.append(time.time())
+                    print("TAP")
+
+                    # calculate and set tempo bpm
+                    bpm = []
+                    for i in range(0, len(self.tap_list), 2):
+                        dif = self.tap_list[i+1] - self.tap_list[i]
+                        bpm.append(1.0/(dif * (1.0/60)))
+
+                    print(bpm)
+                    avgbpm = sum(bpm)/len(bpm)
+                    print(avgbpm)
+                    model.set_global_value(avgbpm)
