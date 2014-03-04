@@ -12,7 +12,7 @@ root.withdraw()
 
 extention = ""
 while extention != "mid":
-    tkMessageBox.showinfo("sccui", "Please select a midi file")
+    tkMessageBox.showinfo("SuperConductor", "Please select a midi file")
     file = tkFileDialog.askopenfilename()
     file_path = file.split('/')
     fileName = file_path[len(file_path)-1]
@@ -33,4 +33,7 @@ while True:
     if c.exited:
         p.exited = True
         exit()
+    if c.replay:
+        c.replay = False
+        p.play()
     pass

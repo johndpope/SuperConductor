@@ -25,6 +25,7 @@ class Controller(Leap.Listener):
         self.control_idx = 0
         
         self.exited = False
+        self.replay = False
 
         self.swipeid = 0
 
@@ -36,7 +37,7 @@ class Controller(Leap.Listener):
         self.defaultColor = (255, 255, 255)
         self.highlightColor = (125, 125, 125)
         self.screen = pygame.display.set_mode((self.windowWidth, self.windowHeight))
-        pygame.display.set_caption("sccui")
+        pygame.display.set_caption("SuperConductor: " + self.fileName)
         
         # Surface
         self.background = pygame.Surface(self.screen.get_size())
@@ -76,6 +77,9 @@ class Controller(Leap.Listener):
                         model.set_track((model.current_track + 1) % NUM_TRACKS)
                         print("Track changed to {0}".format(model.current_track))
                     elif event.key == pygame.K_SPACE:
+                        if float(model.current_time) / model.final_time == 1.0:
+                            self.replay = True
+                            continue
                         self.restore_default()
                         print "Restoring Default for", model.current_control.name
                 elif event.type == pygame.KEYUP:
@@ -91,11 +95,10 @@ class Controller(Leap.Listener):
             
             text = font.render("Now playing:  %s" % self.fileName, 1, self.defaultColor)
             self.screen.blit(text, (0,intY))
-            intY += 20
-            text = font.render("---------------------------------------------------------------------", 1, self.defaultColor)
-            self.screen.blit(text, (0,intY))
+            intY += 30
+            pygame.draw.rect(self.screen, self.defaultColor, [0, intY, self.windowWidth,3])
             
-            intY += 35
+            intY += 25
                            
             for n in self.controls:
                 if n == Controls.PITCH and model.current_track == PERCUSSION:
@@ -149,7 +152,7 @@ class Controller(Leap.Listener):
                         text = font.render("", 1, self.defaultColor)
                     else:
                         text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
-                self.screen.blit(text, (150,intY))
+                self.screen.blit(text, (160,intY))
                 
                 intY += 50
             
@@ -159,6 +162,9 @@ class Controller(Leap.Listener):
             progress = float(model.current_time) / model.final_time
             text = font.render("    {0:.2%}          ".format(progress), 1, self.defaultColor)
             self.screen.blit(text, (350,intY))
+            if progress == 1.0:
+                text = font.render("Press Space to replay, Esc to quit", 1, self.defaultColor)
+                self.screen.blit(text, (0,intY + 50))
             
             intY += 25
             pygame.draw.rect(self.screen, self.highlightColor, [180, intY, progress*350,20])
@@ -188,6 +194,8 @@ class Controller(Leap.Listener):
         if model.current_control == Controls.TEMPO:
             model.set_global_value(model.default_tempo)
         elif model.current_control == Controls.INSTRUMENT:
+            if model.current_track == GLOBAL:
+                return
             model.set_value(model.default_instruments[model.current_track])
         else:
             model.set_value(0)

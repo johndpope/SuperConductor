@@ -1,6 +1,1 @@
-- File Selection in UI
-- Fix quit problem (audio continues after quit)
-- Always display global control info
-- play/pause/stop buttons in ui
-
-- More controls via Leap?
+- Multiple controls simultaneously? (horizontal and vertical)
