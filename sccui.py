@@ -28,6 +28,8 @@ class Controller(Leap.Listener):
         self.stop_multi_listen = False
         self.value_x = 0
         self.initial_value_x = 0
+        self.value_z = 0
+        self.initial_value_z = 0
         
         self.controls = [Controls.VOLUME, Controls.PITCH, Controls.TEMPO, Controls.INSTRUMENT, Controls.TRACK]
         self.control_idx = 0
@@ -276,8 +278,10 @@ class Controller(Leap.Listener):
             if self.start_multi_listen:
                 self.value = hand.palm_position.y
                 self.value_x = -1 * hand.palm_position.x
+                self.value_z = hand.palm_position.z
                 self.initial_value = model.globals[model.current_control]
                 self.initial_value_x = model.globals[Controls.TEMPO]
+                self.initial_value_z = model.globals[Controls.VOLUME]
                 self.start_multi_listen = False
                 self.multi_listening = True
             
@@ -288,14 +292,20 @@ class Controller(Leap.Listener):
             if self.multi_listening:
                 offsetY = int(hand.palm_position.y - self.value)
                 offsetX = int(hand.palm_position.x - self.value_x)
+                offsetZ = int(hand.palm_position.z - self.value_z)
                 
-                offsetX = int(offsetX * .5)
+                offsetX = int(offsetX * .6)
                 # set tempo
                 model.current_control = Controls.TEMPO
                 model.set_global_value(self.initial_value_x + offsetX)
-                model.current_control = Controls.PITCH
+                
+                # set volume
+                offsetZ = int(offsetZ * -0.3)
+                model.current_control = Controls.VOLUME
+                model.set_global_value(self.initial_value_z + offsetZ)
                 
                 # set pitch
+                model.current_control = Controls.PITCH
                 offsetY = int(offsetY * .1)
                 model.set_value(min(max(self.initial_value + offsetY, -127), 127))
 
