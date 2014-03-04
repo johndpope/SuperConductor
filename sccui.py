@@ -1,7 +1,7 @@
 import Leap, sys, pygame
 import threading
 import os
-from Globals import NUM_CONTROLS, Controls, GLOBAL, NUM_TRACKS, INSTRUMENTS
+from Globals import NUM_CONTROLS, Controls, GLOBAL, NUM_TRACKS, INSTRUMENTS, PERCUSSION
 from Leap import SwipeGesture
 import time
 
@@ -22,11 +22,18 @@ class Controller(Leap.Listener):
         self.conduct_tempo = False
         self.value = 0
         self.initial_value = 0
-
+        
+        self.start_multi_listen = False
+        self.multi_listening = False
+        self.stop_multi_listen = False
+        self.value_x = 0
+        self.initial_value_x = 0
+        
         self.controls = [Controls.VOLUME, Controls.PITCH, Controls.TEMPO, Controls.INSTRUMENT, Controls.TRACK]
         self.control_idx = 0
         
         self.exited = False
+        self.replay = False
 
         self.swipeid = 0
         self.tap_list = []
@@ -39,7 +46,7 @@ class Controller(Leap.Listener):
         self.defaultColor = (255, 255, 255)
         self.highlightColor = (125, 125, 125)
         self.screen = pygame.display.set_mode((self.windowWidth, self.windowHeight))
-        pygame.display.set_caption("sccui")
+        pygame.display.set_caption("SuperConductor: " + self.fileName)
         
         # Surface
         self.background = pygame.Surface(self.screen.get_size())
@@ -67,6 +74,11 @@ class Controller(Leap.Listener):
                     elif event.key == pygame.K_t:
                         self.start_listen = True
                         self.conduct_tempo = True
+                    elif event.key == pygame.K_q:
+                        if model.current_control != Controls.PITCH or model.current_track != GLOBAL:
+                            pass
+                        else:
+                            self.start_multi_listen = True
                     elif event.key == pygame.K_w:
                         self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
                         model.set_control(self.controls[self.control_idx])
@@ -82,12 +94,19 @@ class Controller(Leap.Listener):
                         model.set_track((model.current_track + 1) % NUM_TRACKS)
                         print("Track changed to {0}".format(model.current_track))
                     elif event.key == pygame.K_SPACE:
+                        if float(model.current_time) / model.final_time == 1.0:
+                            self.replay = True
+                            continue
                         self.restore_default()
                         print "Restoring Default for", model.current_control.name
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_e or event.key == pygame.K_t:
                         self.stop_listen = True
-                        
+                    if event.key == pygame.K_q:
+                        if model.current_control != Controls.PITCH or model.current_track != GLOBAL:
+                            pass
+                        else:
+                            self.stop_multi_listen = True
             
             self.screen.blit(self.background, (0,0))
     
@@ -98,14 +117,16 @@ class Controller(Leap.Listener):
             
             text = font.render("Now playing:  %s" % self.fileName, 1, self.defaultColor)
             self.screen.blit(text, (0,intY))
-            intY += 20
-            text = font.render("---------------------------------------------------------------------", 1, self.defaultColor)
-            self.screen.blit(text, (0,intY))
+            intY += 30
+            pygame.draw.rect(self.screen, self.defaultColor, [0, intY, self.windowWidth,3])
             
-            intY += 35
+            intY += 25
                            
             for n in self.controls:
-                s = n.name + ":"
+                if n == Controls.PITCH and model.current_track == PERCUSSION:
+                    s = "TYPE:"
+                else:
+                    s = n.name + ":"
                 # Display control labels
                 if n == Controls.PLAY:
                     continue  
@@ -116,10 +137,10 @@ class Controller(Leap.Listener):
                               
                 self.screen.blit(text, (0,intY))
                 
-                # Display global info on the side
+                # Display net info on the side
                 if n == Controls.TRACK:
                    text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
-                elif n == Controls.INSTRUMENT:
+                elif n == Controls.INSTRUMENT or (n == Controls.PITCH and model.current_track == PERCUSSION):
                     text = font.render("", 1, self.defaultColor)
                 else:
                     text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
@@ -134,16 +155,26 @@ class Controller(Leap.Listener):
                     else:
                         text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
                         
+                elif model.current_track == PERCUSSION:
+                    if n == Controls.TRACK:
+                        text = font.render("    {0}          ".format("Percussion"), 1, self.defaultColor)
+                    elif n == Controls.INSTRUMENT:
+                        text = font.render("    {0}          ".format("Percussion"), 1, self.defaultColor)
+                    elif n == Controls.TEMPO:
+                        text = font.render("", 1, self.defaultColor)
+                    else:
+                        text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
+                        
                 else:
                     if n == Controls.TRACK:
-                        text = font.render("    {0}          ".format(model.current_track), 1, self.defaultColor)
+                        text = font.render("    {0}          ".format(model.current_track + 1), 1, self.defaultColor)
                     elif n == Controls.INSTRUMENT:
                         text = font.render("    {0}          ".format(INSTRUMENTS[model.controls[n][model.current_track]]), 1, self.defaultColor)
                     elif n == Controls.TEMPO:
                         text = font.render("", 1, self.defaultColor)
                     else:
                         text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
-                self.screen.blit(text, (150,intY))
+                self.screen.blit(text, (160,intY))
                 
                 intY += 50
             
@@ -153,6 +184,9 @@ class Controller(Leap.Listener):
             progress = float(model.current_time) / model.final_time
             text = font.render("    {0:.2%}          ".format(progress), 1, self.defaultColor)
             self.screen.blit(text, (350,intY))
+            if progress == 1.0:
+                text = font.render("Press Space to replay, Esc to quit", 1, self.defaultColor)
+                self.screen.blit(text, (0,intY + 50))
             
             intY += 25
             pygame.draw.rect(self.screen, self.highlightColor, [180, intY, progress*350,20])
@@ -183,6 +217,8 @@ class Controller(Leap.Listener):
         if model.current_control == Controls.TEMPO:
             model.set_global_value(model.default_tempo)
         elif model.current_control == Controls.INSTRUMENT:
+            if model.current_track == GLOBAL:
+                return
             model.set_value(model.default_instruments[model.current_track])
         else:
             model.set_value(0)
@@ -214,7 +250,7 @@ class Controller(Leap.Listener):
             
             if self.listening:
                 offset = int(hand.palm_position.y - self.value)
-                sys.stdout.write('Offset: {0}          \r'.format(offset))
+                sys.stdout.write('Y Offset: {0}          \r'.format(offset))
                 
                 if model.current_control == Controls.TRACK:
                     pass
@@ -232,10 +268,36 @@ class Controller(Leap.Listener):
                     offset = int(offset * .25)
                     model.set_value(min(max(self.initial_value + offset, 0), 127))
                 elif model.current_control == Controls.PITCH:
-                    offset = int(offset * .1)
-                    model.set_value(self.initial_value + offset)
+                    offset = int(offset * .2)
+                    model.set_value(min(max(self.initial_value + offset, -127), 127))
                 else:
-                    model.set_value(self.initial_value + offset)
+                    model.set_value(min(max(self.initial_value + offset, -127), 127))
+                    
+            if self.start_multi_listen:
+                self.value = hand.palm_position.y
+                self.value_x = -1 * hand.palm_position.x
+                self.initial_value = model.globals[model.current_control]
+                self.initial_value_x = model.globals[Controls.TEMPO]
+                self.start_multi_listen = False
+                self.multi_listening = True
+            
+            if self.stop_multi_listen:
+                self.multi_listening = False
+                self.stop_multi_listen = False
+                
+            if self.multi_listening:
+                offsetY = int(hand.palm_position.y - self.value)
+                offsetX = int(hand.palm_position.x - self.value_x)
+                
+                offsetX = int(offsetX * .5)
+                # set tempo
+                model.current_control = Controls.TEMPO
+                model.set_global_value(self.initial_value_x + offsetX)
+                model.current_control = Controls.PITCH
+                
+                # set pitch
+                offsetY = int(offsetY * .1)
+                model.set_value(min(max(self.initial_value + offsetY, -127), 127))
 
         for gesture in frame.gestures():
             if gesture.type == Leap.Gesture.TYPE_SWIPE \
@@ -248,16 +310,16 @@ class Controller(Leap.Listener):
                 swipe = SwipeGesture(gesture)
                 # horizontal or vertical
                 if abs(swipe.direction.y) > abs(swipe.direction.x):
-                    if swipe.direction.y > 0:
-                        # vertical up
-                        self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
-                        model.set_control(self.controls[self.control_idx])
-                        print("Control changed to {0}".format(model.current_control.name))
-                    else:
-                        # vertical down
-                        self.control_idx = (self.control_idx + 1) % (len(self.controls) - 1)
-                        model.set_control(self.controls[self.control_idx])
-                        print("Control changed to {0}".format(model.current_control))
+                   if swipe.direction.y > 0:
+                       # vertical up
+                       self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
+                       model.set_control(self.controls[self.control_idx])
+                       print("Control changed to {0}".format(model.current_control.name))
+                   else:
+                       # vertical down
+                       self.control_idx = (self.control_idx + 1) % (len(self.controls) - 1)
+                       model.set_control(self.controls[self.control_idx])
+                       print("Control changed to {0}".format(model.current_control))
                 else:
                     # horizontal left
                     offset = 0
@@ -281,12 +343,13 @@ class Controller(Leap.Listener):
                     elif model.current_control == Controls.INSTRUMENT:
                         model.set_value(min(max(self.initial_value + offset, 0), 127))
                     else:
-                        model.set_value(self.initial_value + offset)
+                        model.set_value(min(max(self.initial_value + offset, -127), 127))
+
             if gesture.type == Leap.Gesture.TYPE_KEY_TAP \
                         and self.listening and self.conduct_tempo:
                 
                 t = time.time()
-                if len(self.tap_list) < 10:
+                if len(self.tap_list) < 6:
                     if len(self.tap_list) > 0:
                         dif = t - self.tap_list[-1]
                         if dif < .1:
@@ -303,7 +366,7 @@ class Controller(Leap.Listener):
 
                     # calculate and set tempo bpm
                     bpm = []
-                    for i in range(0, len(self.tap_list), 2):
+                    for i in range(0, len(self.tap_list) - 1):
                         dif = self.tap_list[i+1] - self.tap_list[i]
                         bpm.append(1.0/(dif * (1.0/60)))
 
