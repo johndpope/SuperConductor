@@ -20,7 +20,13 @@ class Controller(Leap.Listener):
         self.stop_listen = False
         self.value = 0
         self.initial_value = 0
-
+        
+        self.start_multi_listen = False
+        self.multi_listening = False
+        self.stop_multi_listen = False
+        self.value_x = 0
+        self.initial_value_x = 0
+        
         self.controls = [Controls.VOLUME, Controls.PITCH, Controls.TEMPO, Controls.INSTRUMENT, Controls.TRACK]
         self.control_idx = 0
         
@@ -62,6 +68,11 @@ class Controller(Leap.Listener):
                         sys.exit()
                     elif event.key == pygame.K_e:
                         self.start_listen = True
+                    elif event.key == pygame.K_q:
+                        if model.current_control != Controls.PITCH or model.current_track != GLOBAL:
+                            pass
+                        else:
+                            self.start_multi_listen = True
                     elif event.key == pygame.K_w:
                         self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
                         model.set_control(self.controls[self.control_idx])
@@ -85,6 +96,11 @@ class Controller(Leap.Listener):
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_e:
                         self.stop_listen = True
+                    if event.key == pygame.K_q:
+                        if model.current_control != Controls.PITCH or model.current_track != GLOBAL:
+                            pass
+                        else:
+                            self.stop_multi_listen = True
             
             self.screen.blit(self.background, (0,0))
     
@@ -224,7 +240,7 @@ class Controller(Leap.Listener):
             
             if self.listening:
                 offset = int(hand.palm_position.y - self.value)
-                sys.stdout.write('Offset: {0}          \r'.format(offset))
+                sys.stdout.write('Y Offset: {0}          \r'.format(offset))
                 
                 if model.current_control == Controls.TRACK:
                     pass
@@ -238,10 +254,36 @@ class Controller(Leap.Listener):
                     offset = int(offset * .25)
                     model.set_value(min(max(self.initial_value + offset, 0), 127))
                 elif model.current_control == Controls.PITCH:
-                    offset = int(offset * .1)
+                    offset = int(offset * .2)
                     model.set_value(min(max(self.initial_value + offset, -127), 127))
                 else:
                     model.set_value(min(max(self.initial_value + offset, -127), 127))
+                    
+            if self.start_multi_listen:
+                self.value = hand.palm_position.y
+                self.value_x = -1 * hand.palm_position.x
+                self.initial_value = model.globals[model.current_control]
+                self.initial_value_x = model.globals[Controls.TEMPO]
+                self.start_multi_listen = False
+                self.multi_listening = True
+            
+            if self.stop_multi_listen:
+                self.multi_listening = False
+                self.stop_multi_listen = False
+                
+            if self.multi_listening:
+                offsetY = int(hand.palm_position.y - self.value)
+                offsetX = int(hand.palm_position.x - self.value_x)
+                
+                offsetX = int(offsetX * .5)
+                # set tempo
+                model.current_control = Controls.TEMPO
+                model.set_global_value(self.initial_value_x + offsetX)
+                model.current_control = Controls.PITCH
+                
+                # set pitch
+                offsetY = int(offsetY * .1)
+                model.set_value(min(max(self.initial_value + offsetY, -127), 127))
 
         for gesture in frame.gestures():
             # Don't handle gestures if we are listening
@@ -255,16 +297,17 @@ class Controller(Leap.Listener):
                 swipe = SwipeGesture(gesture)
                 # horizontal or vertical
                 if abs(swipe.direction.y) > abs(swipe.direction.x):
-                    if swipe.direction.y > 0:
-                        # vertical up
-                        self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
-                        model.set_control(self.controls[self.control_idx])
-                        print("Control changed to {0}".format(model.current_control.name))
-                    else:
-                        # vertical down
-                        self.control_idx = (self.control_idx + 1) % (len(self.controls) - 1)
-                        model.set_control(self.controls[self.control_idx])
-                        print("Control changed to {0}".format(model.current_control))
+                    pass
+#                    if swipe.direction.y > 0:
+#                        # vertical up
+#                        self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
+#                        model.set_control(self.controls[self.control_idx])
+#                        print("Control changed to {0}".format(model.current_control.name))
+#                    else:
+#                        # vertical down
+#                        self.control_idx = (self.control_idx + 1) % (len(self.controls) - 1)
+#                        model.set_control(self.controls[self.control_idx])
+#                        print("Control changed to {0}".format(model.current_control))
                 else:
                     # horizontal left
                     offset = 0
