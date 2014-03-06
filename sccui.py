@@ -73,12 +73,13 @@ class Controller(Leap.Listener):
                         sys.exit()
                     elif event.key == pygame.K_e:
                         self.start_listen = True
-                    elif event.key == pygame.K_t:
+#                    elif event.key == pygame.K_t:
+
+                    elif event.key == pygame.K_q:
                         if model.current_control == Controls.TEMPO:
                             self.start_listen = True
                             self.conduct_tempo = True
-                    elif event.key == pygame.K_q:
-                        if model.current_control != Controls.PITCH or model.current_track != GLOBAL:
+                        elif model.current_control != Controls.PITCH or model.current_track != GLOBAL:
                             pass
                         else:
                             self.start_multi_listen = True
@@ -103,10 +104,12 @@ class Controller(Leap.Listener):
                         self.restore_default()
                         print "Restoring Default for", model.current_control.name
                 elif event.type == pygame.KEYUP:
-                    if event.key == pygame.K_e or event.key == pygame.K_t:
+                    if event.key == pygame.K_e: # or event.key == pygame.K_t:
                         self.stop_listen = True
                     if event.key == pygame.K_q:
-                        if model.current_control != Controls.PITCH or model.current_track != GLOBAL:
+                        if model.current_control == Controls.TEMPO:
+                            self.stop_listen = True
+                        elif model.current_control != Controls.PITCH or model.current_track != GLOBAL:
                             pass
                         else:
                             self.stop_multi_listen = True
