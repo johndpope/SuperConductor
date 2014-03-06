@@ -29,6 +29,7 @@ class PPPlayerView(AbstractView):
     # Starts playing back the file in a new self.thread
     # (A file must be loaded first)
     def play(self):
+        self.waitevent = threading.Event()  # call self.waitevent.set() to interrupt
         self.thread = threading.Thread(target=self.mplay)
         self.thread.daemon = True
         self.thread.start()
@@ -46,6 +47,7 @@ class PPPlayerView(AbstractView):
             print("Instrument {0} on track {1}".format(value, track))
         elif (control == Controls.TEMPO):
             self.secPerTick = self.tempo_to_spt(value)
+
 
     def tempo_to_spt(self, tempo):
         if tempo <= 0:
@@ -75,7 +77,9 @@ class PPPlayerView(AbstractView):
                 self.exited = False
                 break
             if delta:
-                time.sleep(delta * self.secPerTick)
+                # time.sleep(delta * self.secPerTick)
+                self.waitevent.clear()
+                self.waitevent.wait(delta * self.secPerTick)
             if isinstance(event, midi.NoteOnEvent):
                 key = (event.pitch, event.channel)
 
