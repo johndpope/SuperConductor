@@ -74,8 +74,9 @@ class Controller(Leap.Listener):
                     elif event.key == pygame.K_e:
                         self.start_listen = True
                     elif event.key == pygame.K_t:
-                        self.start_listen = True
-                        self.conduct_tempo = True
+                        if model.current_control == Controls.TEMPO:
+                            self.start_listen = True
+                            self.conduct_tempo = True
                     elif event.key == pygame.K_q:
                         if model.current_control != Controls.PITCH or model.current_track != GLOBAL:
                             pass
@@ -262,7 +263,7 @@ class Controller(Leap.Listener):
                     pass
                 elif model.current_control == Controls.TEMPO:
                     offset = int(offset * .5)
-                    model.set_global_value(self.initial_value + offset)
+                    model.set_global_value(max(self.initial_value + offset, 1))
                     print("Value {}".format(self.value))
                     print("Initial {}".format(self.initial_value))
                     print("Tempo {0}".format(model.globals[Controls.TEMPO]))
@@ -297,7 +298,7 @@ class Controller(Leap.Listener):
                 offsetX = int(offsetX * .6)
                 # set tempo
                 model.current_control = Controls.TEMPO
-                model.set_global_value(self.initial_value_x + offsetX)
+                model.set_global_value(max(self.initial_value_x + offsetX, 1))
                 
                 # set volume
                 offsetZ = int(offsetZ * -0.3)
@@ -320,16 +321,17 @@ class Controller(Leap.Listener):
                 swipe = SwipeGesture(gesture)
                 # horizontal or vertical
                 if abs(swipe.direction.y) > abs(swipe.direction.x):
-                   if swipe.direction.y > 0:
-                       # vertical up
-                       self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
-                       model.set_control(self.controls[self.control_idx])
-                       print("Control changed to {0}".format(model.current_control.name))
-                   else:
-                       # vertical down
-                       self.control_idx = (self.control_idx + 1) % (len(self.controls) - 1)
-                       model.set_control(self.controls[self.control_idx])
-                       print("Control changed to {0}".format(model.current_control))
+                    pass
+#                   if swipe.direction.y > 0:
+#                       # vertical up
+#                       self.control_idx = (self.control_idx - 1) % (len(self.controls) - 1)
+#                       model.set_control(self.controls[self.control_idx])
+#                       print("Control changed to {0}".format(model.current_control.name))
+#                   else:
+#                       # vertical down
+#                       self.control_idx = (self.control_idx + 1) % (len(self.controls) - 1)
+#                       model.set_control(self.controls[self.control_idx])
+#                       print("Control changed to {0}".format(model.current_control))
                 else:
                     # horizontal left
                     offset = 0
@@ -346,7 +348,7 @@ class Controller(Leap.Listener):
                     if model.current_control == Controls.TRACK:
                         pass
                     elif model.current_control == Controls.TEMPO:
-                        model.set_global_value(self.initial_value + offset)
+                        model.set_global_value(max(self.initial_value + offset, 1))
                         print("Value {}".format(self.value))
                         print("Initial {}".format(self.initial_value))
                         print("Tempo {0}".format(model.globals[Controls.TEMPO]))
