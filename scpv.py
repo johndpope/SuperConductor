@@ -6,7 +6,7 @@ self.events are reflected in the generated sound output.
 
 from scm import Model
 from AbstractView import AbstractView
-from Globals import Controls, GLOBAL
+from Globals import Controls, State, GLOBAL
 
 import pygame.midi
 import midi
@@ -20,7 +20,9 @@ class PPPlayerView(AbstractView):
         pygame.midi.init()
         model.register_control_listener(self.update_control)
         model.register_value_listener(self.update_value)
+        model.register_state_listener(self.update_state)
         self.exited = False
+        self.paused = False
         self.player = None
         self.thread = None
         self.model = model
@@ -36,7 +38,16 @@ class PPPlayerView(AbstractView):
     
     # Stops playing the current track
     def stop(self):
+        self.waitevent.set()
         self.exited = True
+    
+    def pause(self):
+        self.waitevent.set()
+        self.paused = True
+        
+    def resume(self):
+        self.waitevent.set()
+        self.paused = False 
     
     def update_control(self, value):
         pass
@@ -48,6 +59,21 @@ class PPPlayerView(AbstractView):
         elif (control == Controls.TEMPO):
             self.secPerTick = self.tempo_to_spt(value)
 
+    def update_state(self, state):
+        print "State: ", state
+        if (state == State.READY):
+            self.puased = False
+            self.exited = False
+        elif (state == State.PLAY):
+            if self.paused:
+                self.resume() 
+            else:
+                if (self.model.fileName != None):
+                    self.play()
+        elif (state == State.PAUSE):
+            self.pause()
+        elif (state == State.STOP):
+            self.stop()
 
     def tempo_to_spt(self, tempo):
         if tempo <= 0:
@@ -73,7 +99,21 @@ class PPPlayerView(AbstractView):
             tickTime = event.tick
             while not model.globals[Controls.PLAY]:
                 pass
+            if self.paused:
+                for key in notes.keys():
+                    self.player.note_off(notes[key], 0, key[1])
+                """    
+                while self.paused and not self.exited:
+                    time.sleep(1)
+                """
+                self.waitevent.clear()
+                self.waitevent.wait()
+                          
+                if not self.exited:
+                    for key in notes.keys():
+                        self.player.note_on(notes[key], 0, key[1])
             if self.exited:
+                self.paused = False
                 self.exited = False
                 break
             if delta:

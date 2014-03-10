@@ -1,16 +1,16 @@
 import Leap, sys, pygame
 import threading
 import os
-from Globals import NUM_CONTROLS, Controls, GLOBAL, NUM_TRACKS, INSTRUMENTS, PERCUSSION
+from Globals import NUM_CONTROLS, Controls, State, GLOBAL, NUM_TRACKS, INSTRUMENTS, PERCUSSION
 from Leap import SwipeGesture
 import time
+import Tkinter, tkFileDialog, tkMessageBox
 
 class Controller(Leap.Listener):
     
-    def setup(self, model, leap_controller, fileName):
+    def setup(self, model, leap_controller):
         self.model = model
         self.leap_controller = leap_controller
-        self.fileName = fileName
         
         self.thread = threading.Thread(target=self.keyboard_listener)
         self.thread.daemon = True
@@ -39,24 +39,50 @@ class Controller(Leap.Listener):
 
         self.swipeid = 0
         self.tap_list = []
+        
+        self.bgcolor = (50,40,80)
 
     def keyboard_listener(self):
         pygame.init()
 
-        self.windowWidth = 600
-        self.windowHeight = 400
+        self.windowWidth = 750
+        self.windowHeight = 450
         self.defaultColor = (255, 255, 255)
         self.highlightColor = (125, 125, 125)
         self.screen = pygame.display.set_mode((self.windowWidth, self.windowHeight))
-        pygame.display.set_caption("SuperConductor: " + self.fileName)
+        pygame.display.set_caption("SuperConductor")
+        
+        root = Tkinter.Tk()
+        root.withdraw()
+        
+        extention = ""
+        
+        model = self.model
+        
+        initbgColor = ()
         
         # Surface
         self.background = pygame.Surface(self.screen.get_size())
         self.background = self.background.convert()
-        self.background.fill ((50,0,80))
         
-        model = self.model
         while True:
+            self.background.fill (self.bgcolor)
+            self.screen.blit(self.background, (0,0))
+            """
+            # bg color slowly changes to black, just for fun
+            progress = 0
+            if model.final_time != 0:
+                progress = float(model.current_time) / model.final_time
+            self.bgcolor = ((int(50-50*progress),int(40-40*progress),int(80-80*progress)))
+            """
+            
+            selectButton = self.drawButton(" Select file ", 595, 5, 3, 3)
+            playButton = self.drawButton(" Play ", 7, 400, 3, 3)
+            pauseButton = self.drawButton(" Pause ", playButton[2]+20, 400, 3, 3)
+            stopButton = self.drawButton(" Stop ", pauseButton[2]+20, 400, 3, 3)
+            
+            self.drawKeys(550,225)
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     print "quit"
@@ -98,9 +124,11 @@ class Controller(Leap.Listener):
                         model.set_track((model.current_track + 1) % NUM_TRACKS)
                         print("Track changed to {0}".format(model.current_track))
                     elif event.key == pygame.K_SPACE:
-                        if float(model.current_time) / model.final_time == 1.0:
-                            self.replay = True
-                            continue
+                        if model.final_time != 0:
+                            if float(model.current_time) / model.final_time == 1.0:
+                                #self.replay = True
+                                model.set_state(State.PLAY)
+                                continue
                         self.restore_default()
                         print "Restoring Default for", model.current_control.name
                 elif event.type == pygame.KEYUP:
@@ -113,93 +141,158 @@ class Controller(Leap.Listener):
                             pass
                         else:
                             self.stop_multi_listen = True
-            
-            self.screen.blit(self.background, (0,0))
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    #select file
+                    if ( pos[0] > selectButton[0] and pos[0] < selectButton[2] and pos[1] > selectButton[1] and pos[1] < selectButton[3] ):
+                        #stop currently playing song
+                        if (model.state == State.PLAY or model.state == State.PAUSE):
+                            model.set_state(State.STOP)
+                            
+                        while extention != "mid":
+                            tkMessageBox.showinfo("SuperConductor", "Please select a midi file")
+                            file = tkFileDialog.askopenfilename()
+                            file_path = file.split('/')
+                            fileName = file_path[len(file_path)-1]
+                            fileSplit = fileName.split('.')
+                            extention = fileSplit[len(fileSplit)-1]
+                        model.initVars()
+                        model.load_file(file)
+                        model.fileName = fileName
+                        extention = ""
+                        
+                        model.set_state(State.READY)
+                        
+                    if (pos[1] > playButton[1] and pos[1] < playButton[3]):
+                        #start
+                        if (pos[0] > playButton[0] and pos[0] < playButton[2]):
+                            if not ( model.state == State.INIT or model.state == State.PLAY):
+                                model.set_state(State.PLAY)
+                            else:
+                                if (model.state == State.INIT):
+                                    tkMessageBox.showinfo("sccui", "Please select a midi file")
+                        #pause
+                        if (pos[0] > pauseButton[0] and pos[0] < pauseButton[2]):
+                            if (model.state == State.PLAY):
+                                model.set_state(State.PAUSE)
+                        #stop
+                        if (pos[0] > stopButton[0] and pos[0] < stopButton[2]):
+                            if (model.state == State.PLAY or model.state == State.PAUSE):
+                                model.set_state(State.STOP)
+                                self.restore_default()
     
             # Update UI
             font = pygame.font.Font(None, 36)            
   
-            intY = 0
+            intY = 10
             
-            text = font.render("Now playing:  %s" % self.fileName, 1, self.defaultColor)
-            self.screen.blit(text, (0,intY))
+            text = font.render("Now playing:  %s" % model.fileName, 1, self.defaultColor)
+            self.screen.blit(text, (10,intY))
             intY += 30
             pygame.draw.rect(self.screen, self.defaultColor, [0, intY, self.windowWidth,3])
             
-            intY += 25
-                           
-            for n in self.controls:
-                if n == Controls.PITCH and model.current_track == PERCUSSION:
-                    s = "TYPE:"
-                else:
-                    s = n.name + ":"
-                # Display control labels
-                if n == Controls.PLAY:
-                    continue  
-                if n == model.current_control:
-                    text = font.render("%s" % s, 1, self.highlightColor, (255, 255, 255))
-                else:
-                    text = font.render("%s" % s, 1, self.defaultColor)
-                              
-                self.screen.blit(text, (0,intY))
-                
-                # Display net info on the side
-                if n == Controls.TRACK:
-                   text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
-                elif n == Controls.INSTRUMENT or (n == Controls.PITCH and model.current_track == PERCUSSION):
-                    text = font.render("", 1, self.defaultColor)
-                else:
-                    text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
-                self.screen.blit(text, (350,intY)) 
-                
-                # Display per track info
-                if model.current_track == GLOBAL:
+            intY += 20
+            if ( model.state != State.INIT ):          
+                for n in self.controls:
+                    if n == Controls.PITCH and model.current_track == PERCUSSION:
+                        s = "TYPE:"
+                    else:
+                        s = n.name + ":"
+                    # Display control labels
+                    if n == Controls.PLAY:
+                        continue  
+                    if n == model.current_control:
+                        text = font.render("%s" % s, 1, self.highlightColor, (255, 255, 255))
+                    else:
+                        text = font.render("%s" % s, 1, self.defaultColor)
+                                  
+                    self.screen.blit(text, (10,intY))
+                    
+                    # Display net info on the side
                     if n == Controls.TRACK:
-                        text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
-                    elif n == Controls.INSTRUMENT:
+                       text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
+                    elif n == Controls.INSTRUMENT or (n == Controls.PITCH and model.current_track == PERCUSSION):
                         text = font.render("", 1, self.defaultColor)
                     else:
                         text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
-                        
-                elif model.current_track == PERCUSSION:
-                    if n == Controls.TRACK:
-                        text = font.render("    {0}          ".format("Percussion"), 1, self.defaultColor)
-                    elif n == Controls.INSTRUMENT:
-                        text = font.render("    {0}          ".format("Percussion"), 1, self.defaultColor)
-                    elif n == Controls.TEMPO:
-                        text = font.render("", 1, self.defaultColor)
+                    self.screen.blit(text, (360,intY)) 
+                    
+                    # Display per track info
+                    if model.current_track == GLOBAL:
+                        if n == Controls.TRACK:
+                            text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
+                        elif n == Controls.INSTRUMENT:
+                            text = font.render("", 1, self.defaultColor)
+                        else:
+                            text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
+                            
+                    elif model.current_track == PERCUSSION:
+                        if n == Controls.TRACK:
+                            text = font.render("    {0}          ".format("Percussion"), 1, self.defaultColor)
+                        elif n == Controls.INSTRUMENT:
+                            text = font.render("    {0}          ".format("Percussion"), 1, self.defaultColor)
+                        elif n == Controls.TEMPO:
+                            text = font.render("", 1, self.defaultColor)
+                        else:
+                            text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
+                            
                     else:
-                        text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
-                        
-                else:
-                    if n == Controls.TRACK:
-                        text = font.render("    {0}          ".format(model.current_track + 1), 1, self.defaultColor)
-                    elif n == Controls.INSTRUMENT:
-                        text = font.render("    {0}          ".format(INSTRUMENTS[model.controls[n][model.current_track]]), 1, self.defaultColor)
-                    elif n == Controls.TEMPO:
-                        text = font.render("", 1, self.defaultColor)
-                    else:
-                        text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
-                self.screen.blit(text, (160,intY))
+                        if n == Controls.TRACK:
+                            text = font.render("    {0}          ".format(model.current_track + 1), 1, self.defaultColor)
+                        elif n == Controls.INSTRUMENT:
+                            text = font.render("    {0}          ".format(INSTRUMENTS[model.controls[n][model.current_track]]), 1, self.defaultColor)
+                        elif n == Controls.TEMPO:
+                            text = font.render("", 1, self.defaultColor)
+                        else:
+                            text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
+                    self.screen.blit(text, (160,intY))
+                    
+                    intY += 50
                 
-                intY += 50
-            
-            # Display current progress in the song
-            text = font.render("%s" % "PROGRESS:", 1, self.defaultColor)
-            self.screen.blit(text, (0,intY))
-            progress = float(model.current_time) / model.final_time
-            text = font.render("    {0:.2%}          ".format(progress), 1, self.defaultColor)
-            self.screen.blit(text, (350,intY))
-            if progress == 1.0:
-                text = font.render("Press Space to replay, Esc to quit", 1, self.defaultColor)
-                self.screen.blit(text, (0,intY + 50))
-            
-            intY += 25
-            pygame.draw.rect(self.screen, self.highlightColor, [180, intY, progress*350,20])
-            pygame.draw.rect(self.screen, self.defaultColor, [180+(350*progress),intY, 350-(350*progress),20])
-            
+                # Display current progress in the song
+                text = font.render("%s" % "PROGRESS:", 1, self.defaultColor)
+                self.screen.blit(text, (10,intY))
+                progress = float(model.current_time) / model.final_time
+                text = font.render("    {0:.2%}          ".format(progress), 1, self.defaultColor)
+                self.screen.blit(text, (360,intY))
+                if progress == 1.0:
+                    if (model.state != State.STOP):
+                        model.set_state(State.STOP)
+                    text = font.render("Press Space to replay, Esc to quit", 1, self.defaultColor)
+                    self.screen.blit(text, (10,intY + 50))
+                
+                intY += 25
+                pygame.draw.rect(self.screen, self.highlightColor, [190, intY, progress*300,20])
+                pygame.draw.rect(self.screen, self.defaultColor, [190+(progress*300),intY, 300-(300*progress),20])
             
             pygame.display.flip()
+    
+    def drawKeys(self, initX, initY):
+        font = pygame.font.Font(None, 36)
+        text = font.render("Keys:", 1, self.defaultColor)
+        self.screen.blit(text, (initX,initY))
+        y = initY+25
+        font = pygame.font.Font(None, 30) 
+        text = font.render("E - ", 1, self.defaultColor)
+        self.screen.blit(text, (initX,y))
+        y += 20
+        text = font.render("Q - ", 1, self.defaultColor)
+        self.screen.blit(text, (initX,y))
+        y += 20
+        text = font.render("A, D - Select track", 1, self.defaultColor)
+        self.screen.blit(text, (initX,y))
+        y += 20
+        text = font.render("W, S - Select control", 1, self.defaultColor)
+        self.screen.blit(text, (initX,y))
+        
+    def drawButton(self, word, initX, initY, border, shade):
+        font = pygame.font.Font(None, 36)
+        text = font.render(word, 1, (255,255,255))
+        pygame.draw.rect(self.screen, (60, 60, 60), (initX, initY, text.get_width()+border+shade, text.get_height()+border+shade), 0)
+        pygame.draw.rect(self.screen, (125, 125, 125), (initX, initY, text.get_width()+shade, text.get_height()+shade), 0)
+        pygame.draw.rect(self.screen, (20,20,20), [initX,initY,text.get_width()+border+shade,text.get_height()+border+shade], 2)
+        self.screen.blit(text, (initX+border,initY+border))
+        return [initX, initY, initX+text.get_width()+border+shade, initY+text.get_height()+border+shade]
     
     def on_init(self, controller):
         print "Initialized"
@@ -362,6 +455,8 @@ class Controller(Leap.Listener):
 
             if gesture.type == Leap.Gesture.TYPE_KEY_TAP \
                         and self.listening and self.conduct_tempo:
+                
+                self.bgcolor = (0, 150, 100)
                 
                 t = time.time()
                 if len(self.tap_list) < 6:

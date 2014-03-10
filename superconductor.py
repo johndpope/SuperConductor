@@ -7,25 +7,12 @@ import Leap, pygame, sys
 import Tkinter, tkFileDialog, tkMessageBox
 
 m = Model()
-root = Tkinter.Tk()
-root.withdraw()
 
-extention = ""
-while extention != "mid":
-    tkMessageBox.showinfo("SuperConductor", "Please select a midi file")
-    file = tkFileDialog.askopenfilename()
-    file_path = file.split('/')
-    fileName = file_path[len(file_path)-1]
-    fileSplit = fileName.split('.')
-    extention = fileSplit[len(fileSplit)-1]
-    
-m.load_file(file)
 c = Controller()
 lc = Leap.Controller()
-c.setup(m, lc, fileName)
+c.setup(m, lc)
 lc.add_listener(c)
 p = PPPlayerView(m)
-p.play()
 
 while True:
     # To exit cleanly, if controller thread has ended we need to end
@@ -33,7 +20,9 @@ while True:
     if c.exited:
         p.exited = True
         exit()
+    """
     if c.replay:
         c.replay = False
         p.play()
+    """
     pass

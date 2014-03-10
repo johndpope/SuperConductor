@@ -5,12 +5,20 @@ and registers views to listen for events.
 '''
 
 from notify.all import *
-from Globals import Controls, GLOBAL, NUM_TRACKS
+from Globals import Controls, State, GLOBAL, NUM_TRACKS
 import midi
 
 class Model:
 
     def __init__(self):
+        self.initVars()
+        
+        # signals for notification of control change and value changes
+        self.control_change = Signal()
+        self.value_change = Signal()
+        self.state_change = Signal()
+        
+    def initVars(self):
         # current controlling track
         # values range from 0-16
         # value 0 reserved for global changes
@@ -21,6 +29,9 @@ class Model:
         
         self.current_time = 0
         self.final_time = 0
+                
+        self.state = State.INIT
+        self.fileName = None
         
         # Defaults
         self.default_tempo = 0
@@ -43,16 +54,15 @@ class Model:
                 self.controls[control][track] = 0
 
         self.globals[Controls.PLAY] = 1
-
-        # signals for notification of control change and value changes
-        self.control_change = Signal()
-        self.value_change = Signal()
-
+        
     def register_control_listener(self, listen):
         self.control_change.connect(listen)
 
     def register_value_listener(self, listen):
         self.value_change.connect(listen)
+              
+    def register_state_listener(self, listen):
+        self.state_change.connect(listen)
 
     def set_value(self, value):
         if self.current_track == GLOBAL:
@@ -68,6 +78,10 @@ class Model:
     def set_control(self, value):
         self.current_control = value
         self.control_change(value)
+
+    def set_state(self, value):
+        self.state = value
+        self.state_change(value)
 
     def set_track(self, value):
         self.current_track = value % NUM_TRACKS

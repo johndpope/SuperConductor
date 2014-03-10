@@ -8,6 +8,13 @@ class Controls(Enum):
     TRACK = 5
     PLAY = 6
 
+class State(Enum):
+    INIT = 0
+    READY = 1
+    PLAY = 2
+    PAUSE = 3
+    STOP = 4
+
 NUM_CONTROLS = 6
 GLOBAL = 16
 PERCUSSION = 9
