@@ -69,6 +69,7 @@ class Controller(Leap.Listener):
             self.background.fill (self.bgcolor)
             self.screen.blit(self.background, (0,0))
             self.bgcolor = (50,40,80)
+            
             """
             # bg color slowly changes to black, just for fun
             progress = 0
