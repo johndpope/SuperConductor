@@ -83,7 +83,7 @@ class Controller(Leap.Listener):
             pauseButton = self.drawButton(" Pause ", playButton[2]+20, 500, 3, 3)
             stopButton = self.drawButton(" Stop ", pauseButton[2]+20, 500, 3, 3)
             
-            self.drawKeys(530,225)
+            self.drawKeys(510,405)
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -217,46 +217,46 @@ class Controller(Leap.Listener):
                     
                     # Display net info on the side
                     if n == Controls.TRACK:
-                       text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
+                       text = font.render("{0}".format("All"), 1, self.defaultColor)
                     elif n == Controls.INSTRUMENT or (n == Controls.PITCH and model.current_track == PERCUSSION):
                         text = font.render("", 1, self.defaultColor)
                     elif n == Controls.TEMPO:
-                        text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
+                        text = font.render("{0:.0f}".format(model.globals[n]), 1, self.defaultColor)
                     else:
-                        text = font.render("    {0:+}       ".format(model.globals[n]), 1, self.defaultColor)
-                    self.screen.blit(text, (360,intY)) 
+                        text = font.render("{0:+}".format(model.globals[n]), 1, self.defaultColor)
+                    self.screen.blit(text, (400,intY)) 
                     
                     # Display per track info
                     if model.current_track == GLOBAL:
                         if n == Controls.TRACK:
-                            text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
+                            text = font.render("{0}".format("All"), 1, self.defaultColor)
                         elif n == Controls.INSTRUMENT:
                             text = font.render("", 1, self.defaultColor)
                         elif n == Controls.TEMPO:
-                            text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
+                            text = font.render("{0:.0f}".format(model.globals[n]), 1, self.defaultColor)
                         else:
-                            text = font.render("    {0:+}       ".format(model.globals[n]), 1, self.defaultColor)
+                            text = font.render("{0:+}".format(model.globals[n]), 1, self.defaultColor)
                             
                     elif model.current_track == PERCUSSION:
                         if n == Controls.TRACK:
-                            text = font.render("    {0}          ".format("Percussion"), 1, self.defaultColor)
+                            text = font.render("{0}".format("Percussion"), 1, self.defaultColor)
                         elif n == Controls.INSTRUMENT:
-                            text = font.render("    {0}          ".format("Percussion"), 1, self.defaultColor)
+                            text = font.render("{0}".format("Percussion"), 1, self.defaultColor)
                         elif n == Controls.TEMPO:
                             text = font.render("", 1, self.defaultColor)
                         else:
-                            text = font.render("    {0:+}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
+                            text = font.render("{0:+}".format(model.controls[n][model.current_track]), 1, self.defaultColor)
                             
                     else:
                         if n == Controls.TRACK:
-                            text = font.render("    {0}          ".format(model.current_track + 1), 1, self.defaultColor)
+                            text = font.render("{0}".format(model.current_track + 1), 1, self.defaultColor)
                         elif n == Controls.INSTRUMENT:
-                            text = font.render("    {0}          ".format(INSTRUMENTS[model.controls[n][model.current_track]]), 1, self.defaultColor)
+                            text = font.render("{0}".format(INSTRUMENTS[model.controls[n][model.current_track]]), 1, self.defaultColor)
                         elif n == Controls.TEMPO:
                             text = font.render("", 1, self.defaultColor)
                         else:
-                            text = font.render("    {0:+}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
-                    self.screen.blit(text, (160,intY))
+                            text = font.render("{0:+}".format(model.controls[n][model.current_track]), 1, self.defaultColor)
+                    self.screen.blit(text, (210,intY))
                     
                     if n == Controls.INSTRUMENT:
                         intY += 100
@@ -267,8 +267,8 @@ class Controller(Leap.Listener):
                 text = font.render("%s" % "PROGRESS:", 1, self.defaultColor)
                 self.screen.blit(text, (10,intY))
                 progress = float(model.current_time) / model.final_time
-                text = font.render("    {0:.2%}          ".format(progress), 1, self.defaultColor)
-                self.screen.blit(text, (360,intY))
+                text = font.render("{0:.2%}".format(progress), 1, self.defaultColor)
+                self.screen.blit(text, (400,intY))
                 if progress == 1.0:
                     if (model.state != State.STOP):
                         model.set_state(State.STOP)
@@ -307,6 +307,9 @@ class Controller(Leap.Listener):
         self.screen.blit(text, (initX,y))
         y += 20
         text = font.render("W, S - Select control", 1, self.defaultColor)
+        self.screen.blit(text, (initX,y))
+        y += 20
+        text = font.render("Space - Restore default", 1, self.defaultColor)
         self.screen.blit(text, (initX,y))
         
     def drawButton(self, word, initX, initY, border, shade):
