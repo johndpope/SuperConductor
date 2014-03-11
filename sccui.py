@@ -46,7 +46,7 @@ class Controller(Leap.Listener):
         pygame.init()
 
         self.windowWidth = 750
-        self.windowHeight = 450
+        self.windowHeight = 550
         self.defaultColor = (255, 255, 255)
         self.highlightColor = (125, 125, 125)
         self.screen = pygame.display.set_mode((self.windowWidth, self.windowHeight))
@@ -79,9 +79,9 @@ class Controller(Leap.Listener):
             """
             
             selectButton = self.drawButton(" Select file ", 595, 5, 3, 3)
-            playButton = self.drawButton(" Play ", 7, 400, 3, 3)
-            pauseButton = self.drawButton(" Pause ", playButton[2]+20, 400, 3, 3)
-            stopButton = self.drawButton(" Stop ", pauseButton[2]+20, 400, 3, 3)
+            playButton = self.drawButton(" Play ", 7, 500, 3, 3)
+            pauseButton = self.drawButton(" Pause ", playButton[2]+20, 500, 3, 3)
+            stopButton = self.drawButton(" Stop ", pauseButton[2]+20, 500, 3, 3)
             
             self.drawKeys(530,225)
             
@@ -184,13 +184,13 @@ class Controller(Leap.Listener):
                                 self.restore_default()
     
             # Update UI
-            font = pygame.font.Font(None, 36)            
+            font = pygame.font.SysFont("Lucida Console", 28)            
   
             intY = 10
             if model.fileName == None:
                 printFileName = None
-            elif len(model.fileName) > 30:
-                printFileName = model.fileName[:30 - len(model.fileName)]
+            elif len(model.fileName) > 20:
+                printFileName = model.fileName[:20 - len(model.fileName)]
             else:
                 printFileName = model.fileName
             text = font.render("Now playing:  %s" % printFileName, 1, self.defaultColor)
@@ -256,9 +256,12 @@ class Controller(Leap.Listener):
                             text = font.render("", 1, self.defaultColor)
                         else:
                             text = font.render("    {0:+}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
-                    self.screen.blit(text, (180,intY))
+                    self.screen.blit(text, (160,intY))
                     
-                    intY += 50
+                    if n == Controls.INSTRUMENT:
+                        intY += 100
+                    else:
+                        intY += 50
                 
                 # Display current progress in the song
                 text = font.render("%s" % "PROGRESS:", 1, self.defaultColor)
@@ -270,11 +273,12 @@ class Controller(Leap.Listener):
                     if (model.state != State.STOP):
                         model.set_state(State.STOP)
                     text = font.render("Press Space to replay, Esc to quit", 1, self.defaultColor)
-                    self.screen.blit(text, (10,intY + 50))
+                    self.screen.blit(text, (10,intY + 70))
                 
-                intY += 25
+                intY += 35
+                pygame.draw.rect(self.screen, self.defaultColor, [190, intY, 300,20])
                 pygame.draw.rect(self.screen, self.highlightColor, [190, intY, progress*300,20])
-                pygame.draw.rect(self.screen, self.defaultColor, [190+(progress*300),intY, 300-(300*progress),20])
+                
             
             pygame.display.flip()
     
