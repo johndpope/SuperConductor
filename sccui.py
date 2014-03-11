@@ -82,7 +82,7 @@ class Controller(Leap.Listener):
             pauseButton = self.drawButton(" Pause ", playButton[2]+20, 400, 3, 3)
             stopButton = self.drawButton(" Stop ", pauseButton[2]+20, 400, 3, 3)
             
-            self.drawKeys(550,225)
+            self.drawKeys(530,225)
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -186,8 +186,13 @@ class Controller(Leap.Listener):
             font = pygame.font.Font(None, 36)            
   
             intY = 10
-            
-            text = font.render("Now playing:  %s" % model.fileName, 1, self.defaultColor)
+            if model.fileName == None:
+                printFileName = None
+            elif len(model.fileName) > 30:
+                printFileName = model.fileName[:30 - len(model.fileName)]
+            else:
+                printFileName = model.fileName
+            text = font.render("Now playing:  %s" % printFileName, 1, self.defaultColor)
             self.screen.blit(text, (10,intY))
             intY += 30
             pygame.draw.rect(self.screen, self.defaultColor, [0, intY, self.windowWidth,3])
@@ -214,8 +219,10 @@ class Controller(Leap.Listener):
                        text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
                     elif n == Controls.INSTRUMENT or (n == Controls.PITCH and model.current_track == PERCUSSION):
                         text = font.render("", 1, self.defaultColor)
-                    else:
+                    elif n == Controls.TEMPO:
                         text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
+                    else:
+                        text = font.render("    {0:+}       ".format(model.globals[n]), 1, self.defaultColor)
                     self.screen.blit(text, (360,intY)) 
                     
                     # Display per track info
@@ -224,8 +231,10 @@ class Controller(Leap.Listener):
                             text = font.render("    {0}          ".format("All"), 1, self.defaultColor)
                         elif n == Controls.INSTRUMENT:
                             text = font.render("", 1, self.defaultColor)
-                        else:
+                        elif n == Controls.TEMPO:
                             text = font.render("    {0:.0f}       ".format(model.globals[n]), 1, self.defaultColor)
+                        else:
+                            text = font.render("    {0:+}       ".format(model.globals[n]), 1, self.defaultColor)
                             
                     elif model.current_track == PERCUSSION:
                         if n == Controls.TRACK:
@@ -235,7 +244,7 @@ class Controller(Leap.Listener):
                         elif n == Controls.TEMPO:
                             text = font.render("", 1, self.defaultColor)
                         else:
-                            text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
+                            text = font.render("    {0:+}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
                             
                     else:
                         if n == Controls.TRACK:
@@ -245,8 +254,8 @@ class Controller(Leap.Listener):
                         elif n == Controls.TEMPO:
                             text = font.render("", 1, self.defaultColor)
                         else:
-                            text = font.render("    {0}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
-                    self.screen.blit(text, (160,intY))
+                            text = font.render("    {0:+}          ".format(model.controls[n][model.current_track]), 1, self.defaultColor)
+                    self.screen.blit(text, (180,intY))
                     
                     intY += 50
                 
@@ -273,11 +282,20 @@ class Controller(Leap.Listener):
         text = font.render("Keys:", 1, self.defaultColor)
         self.screen.blit(text, (initX,initY))
         y = initY+25
-        font = pygame.font.Font(None, 30) 
-        text = font.render("E - ", 1, self.defaultColor)
+        font = pygame.font.Font(None, 30)
+        if (self.model.current_track == GLOBAL or self.model.current_track == PERCUSSION) \
+                and self.model.current_control == Controls.INSTRUMENT:
+            text = font.render("E - ", 1, self.defaultColor)
+        else:
+            text = font.render("E - Change value", 1, self.defaultColor)
         self.screen.blit(text, (initX,y))
         y += 20
-        text = font.render("Q - ", 1, self.defaultColor)
+        if self.model.current_control == Controls.TEMPO:
+            text = font.render("Q - Conduct", 1, self.defaultColor)
+        elif self.model.current_control == Controls.PITCH and self.model.current_track == GLOBAL:
+            text = font.render("Q - 3 Axis", 1, self.defaultColor)
+        else:
+            text = font.render("Q - ", 1, self.defaultColor)
         self.screen.blit(text, (initX,y))
         y += 20
         text = font.render("A, D - Select track", 1, self.defaultColor)
