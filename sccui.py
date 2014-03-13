@@ -272,7 +272,7 @@ class Controller(Leap.Listener):
                 if progress == 1.0:
                     if (model.state != State.STOP):
                         model.set_state(State.STOP)
-                    text = font.render("Press Space to replay, Esc to quit", 1, self.defaultColor)
+                    text = font.render("Press Space to replay", 1, self.defaultColor)
                     self.screen.blit(text, (10,intY + 70))
                 
                 intY += 35
