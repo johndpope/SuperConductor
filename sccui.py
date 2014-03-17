@@ -40,7 +40,7 @@ class Controller(Leap.Listener):
         self.swipeid = 0
         self.tap_list = []
         
-        self.bgcolor = (50,40,80)
+        self.bgcolor = (102,0,204)
 
     def keyboard_listener(self):
         pygame.init()
@@ -59,8 +59,6 @@ class Controller(Leap.Listener):
         
         model = self.model
         
-        initbgColor = ()
-        
         # Surface
         self.background = pygame.Surface(self.screen.get_size())
         self.background = self.background.convert()
@@ -68,15 +66,9 @@ class Controller(Leap.Listener):
         while True:
             self.background.fill (self.bgcolor)
             self.screen.blit(self.background, (0,0))
-            self.bgcolor = (50,40,80)
             
-            """
-            # bg color slowly changes to black, just for fun
-            progress = 0
-            if model.final_time != 0:
-                progress = float(model.current_time) / model.final_time
-            self.bgcolor = ((int(50-50*progress),int(40-40*progress),int(80-80*progress)))
-            """
+            if (model.state != State.INIT):
+                self.updateBGcolor()
             
             selectButton = self.drawButton(" Select file ", 595, 5, 3, 3)
             playButton = self.drawButton(" Play ", 7, 500, 3, 3)
@@ -151,19 +143,28 @@ class Controller(Leap.Listener):
                         if (model.state == State.PLAY or model.state == State.PAUSE):
                             model.set_state(State.STOP)
                             
-                        while extention != "mid":
-                            tkMessageBox.showinfo("SuperConductor", "Please select a midi file")
-                            file = tkFileDialog.askopenfilename()
-                            file_path = file.split('/')
-                            fileName = file_path[len(file_path)-1]
-                            fileSplit = fileName.split('.')
-                            extention = fileSplit[len(fileSplit)-1]
-                        model.initVars()
-                        model.load_file(file)
-                        model.fileName = fileName
-                        extention = ""
+                        result = False
                         
-                        model.set_state(State.READY)
+                        while extention != "mid":
+                            #ask user to choose a MIDI file
+                            result = tkMessageBox.askokcancel("SuperConductor", "Please select a midi file.")
+                            if result:
+                                file = tkFileDialog.askopenfilename()
+                                file_path = file.split('/')
+                                fileName = file_path[len(file_path)-1]
+                                fileSplit = fileName.split('.')
+                                extention = fileSplit[len(fileSplit)-1]
+                            else:
+                                break
+                        
+                        if extention == "mid":      
+                            model.initVars()
+                            model.load_file(file)
+                            model.fileName = fileName
+                        
+                            model.set_state(State.READY)
+                        
+                        extention = ""
                         
                     if (pos[1] > playButton[1] and pos[1] < playButton[3]):
                         #start
@@ -281,6 +282,61 @@ class Controller(Leap.Listener):
                 
             
             pygame.display.flip()
+            
+    def updateBGcolor(self):
+        #light -> dark    
+        #rgb: (153,51,255)->(127,0,255)->(102,0,204)->(76,0,153)->(51,0,102)->(25,0,51)
+        #tempo:   400           320          240         160          80          0
+        #red: 25 + (tempo/80)*25
+        #green: tempo-320 * 0.64
+        #blue: 51 + (tempo/80)*51
+        red = 25 + (self.model.globals[Controls.TEMPO]/80)*25
+        green = (self.model.globals[Controls.TEMPO] - 320) * 0.64
+        blue = 51 + (self.model.globals[Controls.TEMPO]/80)*51
+        
+        if red <= 153:
+            red = int(red)
+        else:
+            red = 153
+            
+        if green <= 51:
+            if green < 0:
+                green = 0
+            else:
+                green = int(green)
+        else:
+            green = 51
+            
+        if blue <= 255:
+            blue = int(blue)
+        else:
+            blue = 255
+            
+        self.bgcolor = (red,green,blue)
+        
+        """
+        red = 102 + model.globals[Controls.TEMPO]/4
+        green = model.globals[Controls.TEMPO] - 150
+        blue = 204 + (model.globals[Controls.TEMPO]/50)*2
+                    
+        if red <= 153:
+            red = int(red)
+        else:
+            red = 153
+            
+        if green <= 51:
+            if green < 0:
+                green = 0
+            else:
+                green = int(green)
+        else:
+            green = 51
+            
+        if blue <= 255:
+            blue = int(blue)
+        else:
+            blue = 255
+        """
     
     def drawKeys(self, initX, initY):
         font = pygame.font.Font(None, 36)
